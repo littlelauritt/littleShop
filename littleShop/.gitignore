@@ -1,0 +1,33 @@
+# Archivos y carpetas de Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+
+# Configuración de usuario
+*.userprefs
+*.rsuser
+
+# Archivos de publicación
+publish/
+
+# Archivos de configuración locales
+appsettings.Development.json
+secrets.json
+
+# Archivos de paquetes
+*.nupkg
+*.snupkg
+packages/
+*.vsidx
