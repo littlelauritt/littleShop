@@ -3,10 +3,12 @@ using Aspire.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// --- Base de Datos y Servicios de .NET ---
-var postgres = builder.AddPostgres("postgres");
+// --- PostgreSQL con base de datos asociada ---
+var postgres = builder.AddPostgres("postgres")
+    .WithDataVolume()
+    .AddDatabase("littleshop-db"); 
 
-// Referencia al proyecto de identidad/API
+// --- Proyecto de identidad ---
 var identityService = builder.AddProject<Projects.littleShop_identity>("littleshop-identity")
     .WithReference(postgres);
 
@@ -14,17 +16,12 @@ var identityService = builder.AddProject<Projects.littleShop_identity>("littlesh
 // CONFIGURACIÓN DE LA APLICACIÓN REACT (littleshop.frontend)
 // ----------------------------------------------------------------------------------
 
-// Define la ruta al directorio de la aplicación React.
-// CORRECCIÓN: Usamos 'builder.AppHostDirectory' en lugar de 'builder.Environment.AppHostDirectory'.
-var frontendProjectPath = Path.Combine(builder.AppHostDirectory, "..", "littleshop.frontend");
+// Ruta al directorio de la aplicación React
+var frontendPath = Path.Combine(builder.AppHostDirectory, "..", "littleshop.frontend");
 
-// Agrega el proyecto React como un ejecutable de Aspire.
-// Esto le dice a Aspire que ejecute "npm start" en ese directorio.
-builder.AddExecutable("littleshop-frontend", "npm", frontendProjectPath, "start")
-       // Aspire asignará un puerto HTTP para el frontend.
-       .WithHttpEndpoint(targetPort: 3000, name: "http")
-       // Referencia al servicio de API.
+// Agrega el proyecto React como un recurso ejecutable
+builder.AddExecutable("littleshop-frontend", "npm", frontendPath, "run", "dev")
+       .WithHttpEndpoint(targetPort: 5173, name: "http")
        .WithReference(identityService);
-// Ya no necesitamos .AsResource()
 
 builder.Build().Run();

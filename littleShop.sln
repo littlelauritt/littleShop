@@ -5,17 +5,9 @@ VisualStudioVersion = 17.14.36623.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop", "littleShop\littleShop.csproj", "{9036DDF8-C4DB-4381-8970-12C8C969D5D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.identity", "littleShop.identity\littleShop.identity.csproj", "{630EE002-8D12-B506-2D48-C49824FFDE6B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.identity", "littleShop.identity\littleShop.identity.csproj", "{630EE002-8D12-B506-2D48-C49824FFDE8B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{D107F4C8-89CC-BEA8-D3D7-CA6B7733353D}"
-	ProjectSection(SolutionItems) = preProject
-		docker-compose.yml = docker-compose.yml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-	EndProjectSection
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "littleshop.frontend", "littleshop.frontend\littleshop.frontend.esproj", "{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,10 +19,16 @@ Global
 		{9036DDF8-C4DB-4381-8970-12C8C969D5D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9036DDF8-C4DB-4381-8970-12C8C969D5D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9036DDF8-C4DB-4381-8970-12C8C969D5D9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{630EE002-8D12-B506-2D48-C49824FFDE6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{630EE002-8D12-B506-2D48-C49824FFDE6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{630EE002-8D12-B506-2D48-C49824FFDE6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{630EE002-8D12-B506-2D48-C49824FFDE6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{630EE002-8D12-B506-2D48-C49824FFDE8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{630EE002-8D12-B506-2D48-C49824FFDE8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{630EE002-8D12-B506-2D48-C49824FFDE8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{630EE002-8D12-B506-2D48-C49824FFDE8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
