@@ -1,15 +1,28 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Añadir servicios al contenedor
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Añadir CORS para Aspire/React
+builder.Services.AddCors(options =>
+{
+    // Usamos AllowAnyOrigin() en entornos de desarrollo con Aspire.
+    // Aspire se asegura de que solo los servicios orquestados puedan hablar entre sí.
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configurar pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -17,6 +30,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Activar CORS (¡Va antes de UseAuthorization!)
+app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
 
