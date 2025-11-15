@@ -1,14 +1,24 @@
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 const IDENTITY_API_BASE_URL = import.meta.env.VITE_IDENTITY_API_URL;
-
+console.log(IDENTITY_API_BASE_URL);
 function App() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Validación dinámica de contraseña
+    const passwordValidations = [
+        { label: 'Mínimo 8 caracteres', test: (pwd: string) => pwd.length >= 8 },
+        { label: 'Al menos una mayúscula', test: (pwd: string) => /[A-Z]/.test(pwd) },
+        { label: 'Al menos una minúscula', test: (pwd: string) => /[a-z]/.test(pwd) },
+        { label: 'Al menos un número', test: (pwd: string) => /\d/.test(pwd) },
+        { label: 'Al menos un símbolo', test: (pwd: string) => /[^A-Za-z0-9]/.test(pwd) },
+    ];
 
     const handleRegister = async (e: FormEvent) => {
         e.preventDefault();
@@ -57,7 +67,7 @@ function App() {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             className="form-control"
-                            placeholder="ejemplo@correo.com"
+                            placeholder="Introduce tu correo"
                             required
                         />
                     </div>
@@ -69,9 +79,16 @@ function App() {
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             className="form-control"
-                            placeholder="Mín. 8 caracteres, Mayúscula, Número, Símbolo"
+                            placeholder="Mín. 8 caracteres, mayúscula, número, símbolo"
                             required
                         />
+                        <ul className="password-requirements mt-2 mb-0" style={{ fontSize: '0.85rem' }}>
+                            {passwordValidations.map((v, idx) => (
+                                <li key={idx} style={{ color: v.test(password) ? 'green' : 'red' }}>
+                                    {v.label}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                     <button type="submit" disabled={isLoading} className="btn btn-primary w-100">
                         {isLoading ? 'Registrando...' : 'Registrar Cuenta'}

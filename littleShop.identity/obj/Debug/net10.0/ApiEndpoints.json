@@ -2,7 +2,7 @@
   {
     "ContainingType": "littleShop.identity.Controllers.AccountController",
     "Method": "Register",
-    "RelativePath": "Account/register",
+    "RelativePath": "api/Account/register",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
