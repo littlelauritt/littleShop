@@ -17,6 +17,7 @@
     <PackageReference Include="Npgsql" Version="9.0.4" />
     <PackageReference Include="ServiceStack.OrmLite" Version="8.10.0" />
     <PackageReference Include="ServiceStack.OrmLite.PostgreSQL" Version="8.10.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
   <ItemGroup>

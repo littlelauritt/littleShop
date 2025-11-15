@@ -4,11 +4,13 @@ using System.IO;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// --- PostgreSQL ---
+// --- PostgreSQL con contraseña fija ---
 var postgresContainer = builder.AddPostgres("postgres")
     .WithHostPort(5432)
-    .WithLifetime(ContainerLifetime.Persistent);
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithEnvironment("POSTGRES_PASSWORD", "ze9UwkHTC~p{+G*jJ*v)7{"); // <--- aquí fijas la contraseña
 
+// Añadimos la base de datos (solo nombre)
 var littleShopDb = postgresContainer.AddDatabase("littleshop-db");
 
 // --- Identity ---
