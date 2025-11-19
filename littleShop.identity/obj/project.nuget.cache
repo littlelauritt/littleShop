@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "G/tiJOYtX+w=",
+  "dgSpecHash": "iAZPpckscs8=",
   "success": true,
   "projectFilePath": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleShop.identity\\littleShop.identity.csproj",
   "expectedPackageFiles": [
@@ -43,10 +43,11 @@
     "C:\\Users\\Laura\\.nuget\\packages\\opentelemetry.api\\1.9.0\\opentelemetry.api.1.9.0.nupkg.sha512",
     "C:\\Users\\Laura\\.nuget\\packages\\opentelemetry.api.providerbuilderextensions\\1.9.0\\opentelemetry.api.providerbuilderextensions.1.9.0.nupkg.sha512",
     "C:\\Users\\Laura\\.nuget\\packages\\opentelemetry.extensions.hosting\\1.9.0\\opentelemetry.extensions.hosting.1.9.0.nupkg.sha512",
-    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore\\6.6.2\\swashbuckle.aspnetcore.6.6.2.nupkg.sha512",
-    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.6.2\\swashbuckle.aspnetcore.swagger.6.6.2.nupkg.sha512",
-    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.6.2\\swashbuckle.aspnetcore.swaggergen.6.6.2.nupkg.sha512",
-    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\6.6.2\\swashbuckle.aspnetcore.swaggerui.6.6.2.nupkg.sha512",
+    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore\\6.7.0\\swashbuckle.aspnetcore.6.7.0.nupkg.sha512",
+    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore.annotations\\6.7.0\\swashbuckle.aspnetcore.annotations.6.7.0.nupkg.sha512",
+    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.7.0\\swashbuckle.aspnetcore.swagger.6.7.0.nupkg.sha512",
+    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.7.0\\swashbuckle.aspnetcore.swaggergen.6.7.0.nupkg.sha512",
+    "C:\\Users\\Laura\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\6.7.0\\swashbuckle.aspnetcore.swaggerui.6.7.0.nupkg.sha512",
     "C:\\Users\\Laura\\.nuget\\packages\\system.codedom\\6.0.0\\system.codedom.6.0.0.nupkg.sha512",
     "C:\\Users\\Laura\\.nuget\\packages\\system.composition\\7.0.0\\system.composition.7.0.0.nupkg.sha512",
     "C:\\Users\\Laura\\.nuget\\packages\\system.composition.attributedmodel\\7.0.0\\system.composition.attributedmodel.7.0.0.nupkg.sha512",

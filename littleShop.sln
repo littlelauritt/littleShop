@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop", "littleShop\littleShop.csproj", "{9036DDF8-C4DB-4381-8970-12C8C969D5D9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.identity", "littleShop.identity\littleShop.identity.csproj", "{630EE002-8D12-B506-2D48-C49824FFDE8B}"
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "littleshop.frontend", "littleshop.frontend\littleshop.frontend.esproj", "{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleshop.serviceDefaults", "littleshop.serviceDefaults\littleshop.serviceDefaults.csproj", "{F642EAEB-813E-4F8C-87AD-043028625D4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleshop.apiGateway", "littleshop.ApiGateway\littleshop.apiGateway.csproj", "{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +33,14 @@ Global
 		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{F642EAEB-813E-4F8C-87AD-043028625D4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F642EAEB-813E-4F8C-87AD-043028625D4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F642EAEB-813E-4F8C-87AD-043028625D4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F642EAEB-813E-4F8C-87AD-043028625D4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

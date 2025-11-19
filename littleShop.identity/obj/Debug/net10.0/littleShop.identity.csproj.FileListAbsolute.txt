@@ -139,3 +139,4 @@ C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleShop.identity\obj\Debug\
 C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleShop.identity\obj\Debug\net10.0\littleShop.identity.genruntimeconfig.cache
 C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleShop.identity\obj\Debug\net10.0\ref\littleShop.identity.dll
 C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleShop.identity\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleShop.identity\bin\Debug\net10.0\Swashbuckle.AspNetCore.Annotations.dll

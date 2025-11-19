@@ -5,18 +5,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Projects.littleShop_identity.Data;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ----------------------------------------------------
-// Conexión y DbContext
-// ----------------------------------------------------
+// --------------------
+// DbContext
+// --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
 
-// ----------------------------------------------------
-// Identity Setup
-// ----------------------------------------------------
+// --------------------
+// Identity
+// --------------------
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
@@ -28,9 +29,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// ----------------------------------------------------
-// Evitar redirección automática de cookies en API
-// ----------------------------------------------------
+// Evitar redirección automática en APIs
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Events.OnRedirectToLogin = context =>
@@ -39,78 +38,25 @@ builder.Services.ConfigureApplicationCookie(options =>
             context.Response.StatusCode = 401;
         else
             context.Response.Redirect(context.RedirectUri);
-
         return Task.CompletedTask;
     };
-
     options.Events.OnRedirectToAccessDenied = context =>
     {
         if (context.Request.Path.StartsWithSegments("/api"))
             context.Response.StatusCode = 403;
         else
             context.Response.Redirect(context.RedirectUri);
-
         return Task.CompletedTask;
     };
 });
 
-// ----------------------------------------------------
-// JWT Service
-// ----------------------------------------------------
+// --------------------
+// JWT
+// --------------------
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddScoped<JwtService>();
 
-// ----------------------------------------------------
-// CORS
-// ----------------------------------------------------
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-// ----------------------------------------------------
-// Controladores y Swagger
-// ----------------------------------------------------
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    // Configuración JWT para Swagger
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Introduce 'Bearer {tu_token}'"
-    });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-// ----------------------------------------------------
-// JWT Authentication
-// ----------------------------------------------------
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = "Bearer";
@@ -130,30 +76,71 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ----------------------------------------------------
-// Construcción de la app
-// ----------------------------------------------------
+// --------------------
+// CORS
+// --------------------
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
+// --------------------
+// Controllers + Swagger
+// --------------------
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "LittleShop Identity API", Version = "v1" });
+
+    // JWT Auth en Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Introduce 'Bearer {tu_token}'"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// --------------------
+// Construcción
+// --------------------
 var app = builder.Build();
 
-// ----------------------------------------------------
-// Migraciones y Roles (Seeding)
+// Migraciones + Roles
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
     await context.Database.MigrateAsync();
-
-    if (!await roleManager.RoleExistsAsync(Roles.Admin))
-        await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
-    if (!await roleManager.RoleExistsAsync(Roles.User))
-        await roleManager.CreateAsync(new IdentityRole(Roles.User));
+    foreach (var role in Roles.GetAvailableRoles())
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+    }
 }
 
-// ----------------------------------------------------
+// --------------------
 // Pipeline HTTP
-// ----------------------------------------------------
+// --------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

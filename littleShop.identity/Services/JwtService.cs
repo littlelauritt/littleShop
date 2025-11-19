@@ -1,9 +1,12 @@
-﻿using littleShop.identity.Models;
-using Microsoft.IdentityModel.Tokens;
-using Projects.littleShop_identity.Data;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text;
+using littleShop.identity.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System;
+using System.Threading.Tasks;
+using Projects.littleShop_identity.Data;
 
 namespace littleShop.identity.Services
 {
@@ -26,9 +29,15 @@ namespace littleShop.identity.Services
 
             var claims = new[]
             {
+                // Usamos JwtRegisteredClaimNames para estándares
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim(ClaimTypes.Role, role),
+                
+                //  CAMBIO CRÍTICO: 
+                // En lugar de ClaimTypes.Role (que genera una URL larga), 
+                // forzamos la clave simple "role".
+                new Claim("role", role),
+
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

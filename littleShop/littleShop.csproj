@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\littleshop.ApiGateway\littleshop.apiGateway.csproj" />
     <ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />
   </ItemGroup>
 
