@@ -6,7 +6,18 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -21,6 +32,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.LoginRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -32,7 +53,18 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -47,6 +79,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.RegisterRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -58,7 +100,18 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -73,6 +126,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.RoleCreateRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -89,6 +152,16 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -110,6 +183,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.RoleUpdateRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -126,6 +209,16 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -147,6 +240,16 @@
         "Name": "userId",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -168,6 +271,16 @@
         "Name": "userId",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -184,6 +297,16 @@
         "Name": "roleName",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -195,7 +318,18 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -210,6 +344,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.RegisterRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -226,6 +370,16 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -247,6 +401,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.AdminUpdateUserRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -263,6 +427,16 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -279,6 +453,16 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -295,6 +479,16 @@
         "Name": "id",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -311,6 +505,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.ChangePasswordRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -322,7 +526,18 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -337,6 +552,16 @@
         "Name": "model",
         "Type": "littleShop.identity.Models.UserProfileUpdateRequest",
         "IsRequired": true
+      },
+      {
+        "Name": "api-version",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "X-API-Version",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []

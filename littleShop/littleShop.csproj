@@ -1,28 +1,31 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+	<Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <UserSecretsId>c9f52cfe-5829-4f7e-ac8a-03f183220dd1</UserSecretsId>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UserSecretsId>c9f52cfe-5829-4f7e-ac8a-03f183220dd1</UserSecretsId>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.0" />
-    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.0.0" />
-    <PackageReference Include="Aspire.Npgsql" Version="13.0.0" />
-    <PackageReference Include="Npgsql" Version="9.0.4" />
-    <PackageReference Include="ServiceStack.OrmLite" Version="8.10.0" />
-    <PackageReference Include="ServiceStack.OrmLite.PostgreSQL" Version="8.10.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<!-- Versiones eliminadas; ahora las gestiona Directory.Packages.props -->
+		<PackageReference Include="Aspire.Hosting.AppHost" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" />
+		<PackageReference Include="Aspire.Npgsql" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" />
+		<PackageReference Include="Npgsql" />
+		<PackageReference Include="ServiceStack.OrmLite" />
+		<PackageReference Include="ServiceStack.OrmLite.PostgreSQL" />
+		<PackageReference Include="Swashbuckle.AspNetCore" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\littleshop.ApiGateway\littleshop.apiGateway.csproj" />
-    <ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\littleshop.ApiGateway\littleshop.apiGateway.csproj" />
+		<ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />
+	</ItemGroup>
 
 </Project>

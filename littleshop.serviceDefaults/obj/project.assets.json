@@ -20,6 +20,7 @@
       "packagesPath": "C:\\Users\\Laura\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.serviceDefaults\\obj\\",
       "projectStyle": "PackageReference",
+      "centralPackageVersionsManagementEnabled": true,
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
@@ -33,6 +34,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -56,6 +58,31 @@
     "frameworks": {
       "net9.0": {
         "targetAlias": "net9.0",
+        "centralPackageVersions": {
+          "Aspire.Hosting.AppHost": "13.0.0",
+          "Aspire.Hosting.PostgreSQL": "13.0.0",
+          "Aspire.Npgsql": "9.5.2",
+          "Aspire.Npgsql.EntityFrameworkCore.PostgreSQL": "9.5.2",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.0",
+          "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "9.0.0",
+          "Microsoft.AspNetCore.Mvc.Versioning": "5.1.0",
+          "Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer": "5.1.0",
+          "Microsoft.AspNetCore.OpenApi": "9.0.11",
+          "Microsoft.CodeAnalysis.Analyzers": "3.11.0",
+          "Microsoft.EntityFrameworkCore": "9.0.0",
+          "Microsoft.EntityFrameworkCore.Design": "9.0.0",
+          "Microsoft.EntityFrameworkCore.Tools": "9.0.0",
+          "Microsoft.OpenApi.Models": "1.4.0",
+          "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": "1.23.0",
+          "Npgsql": "9.0.4",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
+          "ServiceStack.OrmLite": "8.10.0",
+          "ServiceStack.OrmLite.PostgreSQL": "8.10.0",
+          "Swashbuckle.AspNetCore": "10.0.1",
+          "Swashbuckle.AspNetCore.Annotations": "6.7.0",
+          "System.IdentityModel.Tokens.Jwt": "8.14.0",
+          "Yarp.ReverseProxy": "2.3.0"
+        },
         "imports": [
           "net461",
           "net462",

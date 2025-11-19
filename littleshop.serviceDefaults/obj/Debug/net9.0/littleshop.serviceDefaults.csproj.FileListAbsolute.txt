@@ -1,0 +1,12 @@
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\bin\Debug\net9.0\littleshop.serviceDefaults.deps.json
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\bin\Debug\net9.0\littleshop.serviceDefaults.dll
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\bin\Debug\net9.0\littleshop.serviceDefaults.pdb
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\littleshop.serviceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\littleshop.serviceDefaults.AssemblyInfoInputs.cache
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\littleshop.serviceDefaults.AssemblyInfo.cs
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\littleshop.serviceDefaults.csproj.CoreCompileInputs.cache
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\littleshop.serviceDefaults.sourcelink.json
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\littleshop.serviceDefaults.dll
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\refint\littleshop.serviceDefaults.dll
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\littleshop.serviceDefaults.pdb
+C:\Users\Laura\Documents\PROYECTOS DEV\littleShop\littleshop.serviceDefaults\obj\Debug\net9.0\ref\littleshop.serviceDefaults.dll

@@ -1,11 +1,16 @@
 using littleShop.identity.Models;
 using littleShop.identity.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+// ELIMINADA: La directiva 'using Microsoft.OpenApi;' no es correcta.
+// COMENTADA: La directiva 'using Microsoft.OpenApi.Models;' debe estar COMENTADA o ELIMINADA.
 using Projects.littleShop_identity.Data;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // DbContext
 // --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
+options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
 
 // --------------------
 // Identity
@@ -26,8 +31,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Password.RequireDigit = true;
     options.Password.RequireNonAlphanumeric = true;
 })
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
 // Evitar redirección automática en APIs
 builder.Services.ConfigureApplicationCookie(options =>
@@ -88,36 +93,35 @@ builder.Services.AddCors(options =>
 });
 
 // --------------------
-// Controllers + Swagger
+// Controllers
 // --------------------
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+
+// --------------------
+// Versionado de API
+// --------------------
+builder.Services.AddApiVersioning(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "LittleShop Identity API", Version = "v1" });
-
-    // JWT Auth en Swagger
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Introduce 'Bearer {tu_token}'"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            Array.Empty<string>()
-        }
-    });
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+    new QueryStringApiVersionReader("api-version"),
+    new HeaderApiVersionReader("X-API-Version")
+    );
 });
+
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// --------------------
+// Swagger
+// --------------------
+builder.Services.AddSwaggerGen();
+builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 // --------------------
 // Construcción
@@ -143,8 +147,16 @@ using (var scope = app.Services.CreateScope())
 // --------------------
 if (app.Environment.IsDevelopment())
 {
+    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        foreach (var description in provider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+            description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseRouting();
@@ -153,3 +165,56 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+// --------------------
+// Configuración de Swagger dinámica
+// --------------------
+public class ConfigureSwaggerOptions : Microsoft.Extensions.Options.IConfigureOptions<SwaggerGenOptions>
+{
+    private readonly IApiVersionDescriptionProvider provider;
+
+    public ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider)
+    {
+        this.provider = provider;
+    }
+
+    public void Configure(SwaggerGenOptions options)
+    {
+        /*
+        // ESTE BLOQUE COMPLETO ESTÁ COMENTADO PARA EVITAR ERRORES DE COMPILACIÓN (CS0246, CS0117).
+        // Contiene tipos (OpenApiInfo, OpenApiSecurityScheme, etc.) que no se encuentran
+        // porque el paquete Microsoft.OpenApi.Models no se descarga (Error NU1101).
+        
+		foreach (var description in provider.ApiVersionDescriptions)
+		{
+			options.SwaggerDoc(description.GroupName, new OpenApiInfo
+			{
+				Title = $"LittleShop Identity API {description.ApiVersion}",
+				Version = description.ApiVersion.ToString()
+			});
+		}
+
+		// JWT en Swagger
+		options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+		{
+			Name = "Authorization",
+			Type = SecuritySchemeType.ApiKey,
+			Scheme = "Bearer",
+			BearerFormat = "JWT",
+			In = ParameterLocation.Header,
+			Description = "Introduce 'Bearer {tu_token}'"
+		});
+
+		options.AddSecurityRequirement(new OpenApiSecurityRequirement
+		{
+			{
+				new OpenApiSecurityScheme
+				{
+					Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+				},
+				Array.Empty<string>()
+			}
+		});
+        */
+    }
+}

@@ -3,28 +3,16 @@
   "WorkspaceRootPath": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop.frontend\\src\\components\\common\\header.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
-      "RelativeMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|solutionrelative:littleshop.frontend\\src\\components\\common\\header.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+      "AbsoluteMoniker": "D:0:0:{630EE002-8D12-B506-2D48-C49824FFDE8B}|littleShop.identity\\littleShop.identity.csproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop.identity\\littleshop.identity.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{630EE002-8D12-B506-2D48-C49824FFDE8B}|littleShop.identity\\littleShop.identity.csproj|solutionrelative:littleshop.identity\\littleshop.identity.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop.frontend\\src\\components\\admin\\adminrolemanagement.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
-      "RelativeMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|solutionrelative:littleshop.frontend\\src\\components\\admin\\adminrolemanagement.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+      "AbsoluteMoniker": "D:0:0:{9036DDF8-C4DB-4381-8970-12C8C969D5D9}|littleShop\\littleShop.csproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop\\littleshop.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{9036DDF8-C4DB-4381-8970-12C8C969D5D9}|littleShop\\littleShop.csproj|solutionrelative:littleshop\\littleshop.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop.frontend\\src\\components\\admin\\adminusermanagement.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
-      "RelativeMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|solutionrelative:littleshop.frontend\\src\\components\\admin\\adminusermanagement.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop.frontend\\src\\app.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
-      "RelativeMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|solutionrelative:littleshop.frontend\\src\\app.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop.frontend\\src\\components\\admin\\admindashboard.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
-      "RelativeMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|solutionrelative:littleshop.frontend\\src\\components\\admin\\admindashboard.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|c:\\users\\laura\\documents\\proyectos dev\\littleshop\\littleshop.frontend\\src\\components\\common\\protectedroute.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
-      "RelativeMoniker": "D:0:0:{A81E9D18-3A28-CEA6-6C7A-85372F12C9DF}|littleshop.frontend\\littleshop.frontend.esproj|solutionrelative:littleshop.frontend\\src\\components\\common\\protectedroute.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+      "AbsoluteMoniker": "D:0:0:{B122B756-3E9B-4328-9964-426DA7F7A2DF}|Elementos de la soluci\u00F3n{B122B756-3E9B-4328-9964-426DA7F7A2DF}|C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\Directory.Packages.props||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{B122B756-3E9B-4328-9964-426DA7F7A2DF}|Elementos de la soluci\u00F3n{B122B756-3E9B-4328-9964-426DA7F7A2DF}|solutionrelative:Directory.Packages.props||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
     }
   ],
   "DocumentGroupContainers": [
@@ -34,88 +22,45 @@
       "DocumentGroups": [
         {
           "DockedWidth": 204,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Header.tsx",
-              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\common\\Header.tsx",
-              "RelativeDocumentMoniker": "littleshop.frontend\\src\\components\\common\\Header.tsx",
-              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\common\\Header.tsx",
-              "RelativeToolTip": "littleshop.frontend\\src\\components\\common\\Header.tsx",
-              "ViewState": "AgIAACQAAAAAAAAAAAAAADsAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
-              "WhenOpened": "2025-11-19T10:44:11.047Z",
+              "Title": "littleShop.identity.csproj",
+              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleShop.identity\\littleShop.identity.csproj",
+              "RelativeDocumentMoniker": "littleShop.identity\\littleShop.identity.csproj",
+              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleShop.identity\\littleShop.identity.csproj",
+              "RelativeToolTip": "littleShop.identity\\littleShop.identity.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-11-19T16:34:42.224Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "AdminRoleManagement.tsx",
-              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\admin\\AdminRoleManagement.tsx",
-              "RelativeDocumentMoniker": "littleshop.frontend\\src\\components\\admin\\AdminRoleManagement.tsx",
-              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\admin\\AdminRoleManagement.tsx",
-              "RelativeToolTip": "littleshop.frontend\\src\\components\\admin\\AdminRoleManagement.tsx",
-              "ViewState": "AgIAADIAAAAAAAAAAADwv0AAAAAXAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
-              "WhenOpened": "2025-11-19T10:38:53.618Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "AdminDashboard.tsx",
-              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\admin\\AdminDashboard.tsx",
-              "RelativeDocumentMoniker": "littleshop.frontend\\src\\components\\admin\\AdminDashboard.tsx",
-              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\admin\\AdminDashboard.tsx",
-              "RelativeToolTip": "littleshop.frontend\\src\\components\\admin\\AdminDashboard.tsx",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
-              "WhenOpened": "2025-11-19T10:38:10.804Z",
+              "Title": "littleShop.csproj",
+              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleShop\\littleShop.csproj",
+              "RelativeDocumentMoniker": "littleShop\\littleShop.csproj",
+              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleShop\\littleShop.csproj",
+              "RelativeToolTip": "littleShop\\littleShop.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-11-19T16:57:40.074Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "AdminUserManagement.tsx",
-              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\admin\\AdminUserManagement.tsx",
-              "RelativeDocumentMoniker": "littleshop.frontend\\src\\components\\admin\\AdminUserManagement.tsx",
-              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\admin\\AdminUserManagement.tsx",
-              "RelativeToolTip": "littleshop.frontend\\src\\components\\admin\\AdminUserManagement.tsx",
-              "ViewState": "AgIAADoAAAAAAAAAAAAAwFkAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
-              "WhenOpened": "2025-11-19T10:35:09.521Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "App.tsx",
-              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\App.tsx",
-              "RelativeDocumentMoniker": "littleshop.frontend\\src\\App.tsx",
-              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\App.tsx",
-              "RelativeToolTip": "littleshop.frontend\\src\\App.tsx",
-              "ViewState": "AgIAAEQAAAAAAAAAAADwv1QAAAAsAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
-              "WhenOpened": "2025-11-19T10:31:01.968Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "ProtectedRoute.tsx",
-              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\common\\ProtectedRoute.tsx",
-              "RelativeDocumentMoniker": "littleshop.frontend\\src\\components\\common\\ProtectedRoute.tsx",
-              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\littleshop.frontend\\src\\components\\common\\ProtectedRoute.tsx",
-              "RelativeToolTip": "littleshop.frontend\\src\\components\\common\\ProtectedRoute.tsx",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAE0AAAAeAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
-              "WhenOpened": "2025-11-19T10:28:12.369Z",
+              "Title": "Directory.Packages.props",
+              "DocumentMoniker": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\Directory.Packages.props",
+              "RelativeDocumentMoniker": "Directory.Packages.props",
+              "ToolTip": "C:\\Users\\Laura\\Documents\\PROYECTOS DEV\\littleShop\\Directory.Packages.props",
+              "RelativeToolTip": "Directory.Packages.props",
+              "ViewState": "AgIAABAAAAAAAAAAAAAawB0AAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003801|",
+              "WhenOpened": "2025-11-19T16:40:37.588Z",
               "EditorCaption": ""
             }
           ]

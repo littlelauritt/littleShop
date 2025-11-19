@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "littleshop.serviceDefaults/1.0.0": {
+        "runtime": {
+          "littleshop.serviceDefaults.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "littleshop.serviceDefaults/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

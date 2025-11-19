@@ -1,0 +1,49 @@
+<Project>
+<PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<!-- Aspire/Hosting Packages -->
+		<PackageVersion Include="Aspire.Hosting.AppHost" Version="13.0.0" />
+		<PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.0.0" />
+		<!-- Mantenemos Aspire/Npgsql en versión estable (9.x) -->
+		<PackageVersion Include="Aspire.Npgsql" Version="9.5.2" />
+		<PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.5.2" />
+
+		<!-- Database and ORM -->
+		<PackageVersion Include="Npgsql" Version="9.0.4" />
+		<PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+		<PackageVersion Include="ServiceStack.OrmLite" Version="8.10.0" />
+		<PackageVersion Include="ServiceStack.OrmLite.PostgreSQL" Version="8.10.0" />
+
+		<!-- FIX CRÍTICO: FORZAR TODOS LOS PAQUETES EF CORE A 9.0.0 -->
+		<!-- Esto satisface el requisito estricto de Npgsql (9.0.4) y debe resolver el NU1107. -->
+		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0" />
+
+		<!-- API Gateways and Proxies -->
+		<PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+
+		<!-- API Documentation and Versioning -->
+		<PackageVersion Include="Swashbuckle.AspNetCore" Version="10.0.1" />
+		<PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.7.0" />
+		<PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
+		<!-- Mantenemos la referencia a OpenApi para solucionar el NU1101 -->
+		<PackageVersion Include="Microsoft.OpenApi.Models" Version="1.4.0" />
+		<PackageVersion Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
+		<PackageVersion Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
+
+		<!-- Identity and Authentication -->
+		<!-- Downgrade a 9.0.0 para que dependa de EF Core 9.0.0 y no de 10.0.0 -->
+		<PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+		<PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+		<PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+
+		<!-- Tooling and Build -->
+		<PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+
+	</ItemGroup>
+</Project>
