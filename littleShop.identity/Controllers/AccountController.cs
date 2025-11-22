@@ -4,13 +4,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Projects.littleShop_identity.Data;
-using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace littleShop.identity.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
+    [Tags("🔑 Autenticación (Cuenta y Login)")]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
@@ -44,15 +46,13 @@ namespace littleShop.identity.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        [SwaggerOperation(Summary = "Login de usuario y obtención de JWT")] // Asegúrate de tener la anotación
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            // 1. Buscar al usuario por Email/UserName
-            // Usamos FindByEmailAsync, ya que el usuario es más propenso a recordarlo.
+            // 1. Buscar al usuario por Email
             var user = await _userManager.FindByEmailAsync(model.Email);
 
-            // 2. Si no existe, Unauthorized (para no dar pistas sobre qué falla)
-            if (user == null)
+            // 2. Validaciones básicas
+            if (user == null || user.Email == null)
                 return Unauthorized(new { Message = "Usuario o contraseña incorrecta" });
 
             // 3. Verificar la contraseña
@@ -63,18 +63,19 @@ namespace littleShop.identity.Controllers
             // 4. Generar el Token JWT
             var roles = await _userManager.GetRolesAsync(user);
 
-            // Asumimos que el primer rol es el que se quiere incluir en el token.
-            var token = await _jwtService.GenerateJwtAsync(user.Id, user.Email, roles.First());
+            // Obtenemos el rol principal o "User" por defecto si la lista viniera vacía por error de DB
+            var primaryRole = roles.FirstOrDefault() ?? Roles.User;
+
+            // Aquí es donde corregimos el error CS8604 asegurando que user.Email no es nulo
+            var token = await _jwtService.GenerateJwtAsync(user.Id, user.Email, primaryRole);
 
             return Ok(token);
         }
 
         [Authorize]
         [HttpGet("me")]
-        [SwaggerOperation(Summary = "Obtiene información del usuario autenticado")]
         public async Task<IActionResult> GetCurrentUser()
         {
-            // Usar el ID del Claim para mayor robustez
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (userId == null)
@@ -102,4 +103,3 @@ namespace littleShop.identity.Controllers
         }
     }
 }
-

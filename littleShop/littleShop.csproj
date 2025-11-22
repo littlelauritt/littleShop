@@ -1,31 +1,22 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-	<Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
 
 	<PropertyGroup>
-		<OutputType>Exe</OutputType>
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<UserSecretsId>c9f52cfe-5829-4f7e-ac8a-03f183220dd1</UserSecretsId>
+		<UserSecretsId>littleShop-secrets-id</UserSecretsId>
+		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Versiones eliminadas; ahora las gestiona Directory.Packages.props -->
+		<!-- Paquetes del orquestador (Versiones gestionadas por Directory.Packages.props) -->
 		<PackageReference Include="Aspire.Hosting.AppHost" />
 		<PackageReference Include="Aspire.Hosting.PostgreSQL" />
-		<PackageReference Include="Aspire.Npgsql" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" />
-		<PackageReference Include="Npgsql" />
-		<PackageReference Include="ServiceStack.OrmLite" />
-		<PackageReference Include="ServiceStack.OrmLite.PostgreSQL" />
-		<PackageReference Include="Swashbuckle.AspNetCore" />
-	</ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\littleshop.ApiGateway\littleshop.apiGateway.csproj" />
+		<!-- Referencias a tus microservicios -->
 		<ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />
+		<ProjectReference Include="..\littleshop.apiGateway\littleshop.apiGateway.csproj" />
+		<ProjectReference Include="..\littleshop.frontend\littleshop.frontend.esproj" />
 	</ItemGroup>
 
 </Project>

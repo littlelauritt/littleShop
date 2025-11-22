@@ -1,28 +1,25 @@
-using littleShop.identity.Models;
+Ôªøusing littleShop.identity.Models;
 using littleShop.identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Versioning;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-// ELIMINADA: La directiva 'using Microsoft.OpenApi;' no es correcta.
-// COMENTADA: La directiva 'using Microsoft.OpenApi.Models;' debe estar COMENTADA o ELIMINADA.
 using Projects.littleShop_identity.Data;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using System.Reflection;
+using Scalar.AspNetCore;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --------------------
-// DbContext
-// --------------------
+// 1. BASE DE DATOS
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
 
-// --------------------
-// Identity
-// --------------------
+// 2. IDENTITY
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
@@ -34,38 +31,26 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Evitar redirecciÛn autom·tica en APIs
-builder.Services.ConfigureApplicationCookie(options =>
+// 3. OPENAPI NATIVO (V1)
+builder.Services.AddOpenApi("v1", options =>
 {
-    options.Events.OnRedirectToLogin = context =>
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        if (context.Request.Path.StartsWithSegments("/api"))
-            context.Response.StatusCode = 401;
-        else
-            context.Response.Redirect(context.RedirectUri);
+        document.Info.Title = "LittleShop Identity API V1";
+        document.Info.Version = "v1";
         return Task.CompletedTask;
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        if (context.Request.Path.StartsWithSegments("/api"))
-            context.Response.StatusCode = 403;
-        else
-            context.Response.Redirect(context.RedirectUri);
-        return Task.CompletedTask;
-    };
+    });
 });
 
-// --------------------
-// JWT
-// --------------------
+// 4. JWT & AUTH
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = "Bearer";
-    options.DefaultChallengeScheme = "Bearer";
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer("Bearer", options =>
 {
@@ -81,140 +66,91 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// --------------------
-// CORS
-// --------------------
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-    });
-});
+builder.Services.AddAuthorization();
 
-// --------------------
-// Controllers
-// --------------------
-builder.Services.AddControllers();
-
-// --------------------
-// Versionado de API
-// --------------------
+// 5. VERSIONADO
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
-    options.ApiVersionReader = ApiVersionReader.Combine(
-    new QueryStringApiVersionReader("api-version"),
-    new HeaderApiVersionReader("X-API-Version")
-    );
-});
-
-builder.Services.AddVersionedApiExplorer(options =>
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+})
+.AddApiExplorer(options =>
 {
     options.GroupNameFormat = "'v'VVV";
     options.SubstituteApiVersionInUrl = true;
 });
 
-// --------------------
-// Swagger
-// --------------------
-builder.Services.AddSwaggerGen();
-builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
 
-// --------------------
-// ConstrucciÛn
-// --------------------
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
-// Migraciones + Roles
+// 6. MIGRACI√ìN DB + SEED DE ROLES AUTOM√ÅTICO
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    // Aplica migraciones pendientes
     await context.Database.MigrateAsync();
-    foreach (var role in Roles.GetAvailableRoles())
+
+    // Roles que queremos asegurar que existan
+    string[] roles = new[] { "Admin", "User" };
+
+    foreach (var roleName in roles)
     {
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            var result = await roleManager.CreateAsync(new IdentityRole(roleName));
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new Exception($"No se pudo crear el rol '{roleName}': {errors}");
+            }
+        }
     }
 }
 
-// --------------------
-// Pipeline HTTP
-// --------------------
+// 7. PIPELINE HTTP
 if (app.Environment.IsDevelopment())
 {
-    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-    app.UseSwagger();
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("LittleShop Identity API")
+            .WithTheme(ScalarTheme.DeepSpace)
+            .WithOpenApiRoutePattern("/openapi/v1.json");
+    });
+
     app.UseSwaggerUI(options =>
     {
-        foreach (var description in provider.ApiVersionDescriptions)
-        {
-            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-            description.GroupName.ToUpperInvariant());
-        }
+        options.SwaggerEndpoint("/openapi/v1.json", "LittleShop Identity V1");
     });
 }
 
-app.UseRouting();
-app.UseCors("AllowFrontend");
+app.UseHttpsRedirection();
+app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-app.Run();
-
-// --------------------
-// ConfiguraciÛn de Swagger din·mica
-// --------------------
-public class ConfigureSwaggerOptions : Microsoft.Extensions.Options.IConfigureOptions<SwaggerGenOptions>
+app.MapGet("/", () => Results.Redirect("/scalar/v1"));
+app.MapGet("/help", () => Results.Ok(new
 {
-    private readonly IApiVersionDescriptionProvider provider;
+    Scalar = "/scalar/v1",
+    Swagger = "/swagger/index.html"
+}));
 
-    public ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider)
-    {
-        this.provider = provider;
-    }
-
-    public void Configure(SwaggerGenOptions options)
-    {
-        /*
-        // ESTE BLOQUE COMPLETO EST¡ COMENTADO PARA EVITAR ERRORES DE COMPILACI”N (CS0246, CS0117).
-        // Contiene tipos (OpenApiInfo, OpenApiSecurityScheme, etc.) que no se encuentran
-        // porque el paquete Microsoft.OpenApi.Models no se descarga (Error NU1101).
-        
-		foreach (var description in provider.ApiVersionDescriptions)
-		{
-			options.SwaggerDoc(description.GroupName, new OpenApiInfo
-			{
-				Title = $"LittleShop Identity API {description.ApiVersion}",
-				Version = description.ApiVersion.ToString()
-			});
-		}
-
-		// JWT en Swagger
-		options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-		{
-			Name = "Authorization",
-			Type = SecuritySchemeType.ApiKey,
-			Scheme = "Bearer",
-			BearerFormat = "JWT",
-			In = ParameterLocation.Header,
-			Description = "Introduce 'Bearer {tu_token}'"
-		});
-
-		options.AddSecurityRequirement(new OpenApiSecurityRequirement
-		{
-			{
-				new OpenApiSecurityScheme
-				{
-					Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-				},
-				Array.Empty<string>()
-			}
-		});
-        */
-    }
-}
+app.Run();

@@ -3,13 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Projects.littleShop_identity.Data;
-using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace littleShop.identity.Controllers
 {
+
     [ApiController]
-    [Route("api/admin/users")] // Pequeño cambio en ruta para que sea más RESTful
+    [Route("api/admin/users")]
     [Authorize(Roles = Roles.Admin)]
+    [Tags("👤 Administración de Usuarios")]
     public class AdminUsersController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
@@ -18,13 +20,12 @@ namespace littleShop.identity.Controllers
         {
             _userManager = userManager;
         }
-
         [HttpGet]
-        [SwaggerOperation(Summary = "Obtiene todos los usuarios (incluyendo estado de bloqueo)")]
         public IActionResult GetAllUsers()
         {
             // Devolvemos también si está bloqueado (LockoutEnd)
-            var users = _userManager.Users.Select(u => new {
+            var users = _userManager.Users.Select(u => new
+            {
                 u.Id,
                 u.Email,
                 IsLocked = u.LockoutEnd > DateTimeOffset.UtcNow
@@ -32,8 +33,8 @@ namespace littleShop.identity.Controllers
             return Ok(users);
         }
 
+
         [HttpPost]
-        [SwaggerOperation(Summary = "Crea un nuevo usuario")]
         public async Task<IActionResult> CreateUser([FromBody] RegisterRequest model)
         {
             var user = new IdentityUser { UserName = model.Email, Email = model.Email };
@@ -45,8 +46,8 @@ namespace littleShop.identity.Controllers
             return Ok(new { Message = "Usuario creado con éxito" });
         }
 
+  
         [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Obtiene un usuario por ID")]
         public async Task<IActionResult> GetUserById(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -56,8 +57,8 @@ namespace littleShop.identity.Controllers
             return Ok(new { user.Id, user.Email, Roles = roles, LockoutEnd = user.LockoutEnd });
         }
 
+      
         [HttpPut("{id}")]
-        [SwaggerOperation(Summary = "Actualiza información básica de un usuario (Admin)")]
         public async Task<IActionResult> UpdateUser(string id, [FromBody] AdminUpdateUserRequest model)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -72,8 +73,8 @@ namespace littleShop.identity.Controllers
             return Ok(new { Message = "Usuario actualizado" });
         }
 
+      
         [HttpDelete("{id}")]
-        [SwaggerOperation(Summary = "Elimina un usuario por ID")]
         public async Task<IActionResult> DeleteUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -85,32 +86,33 @@ namespace littleShop.identity.Controllers
             return Ok(new { Message = "Usuario eliminado" });
         }
 
-        // --- LOCK / UNLOCK ---
-
+     
         [HttpPost("{id}/lock")]
-        [SwaggerOperation(Summary = "Bloquea la cuenta de un usuario temporalmente (100 años)")]
         public async Task<IActionResult> LockUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
+            if (user == null)
+                return NotFound();
 
             // Bloquear por 100 años
             var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
-            if (!result.Succeeded) return BadRequest(result.Errors);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
             return Ok(new { Message = "Usuario bloqueado correctamente" });
         }
 
         [HttpPost("{id}/unlock")]
-        [SwaggerOperation(Summary = "Desbloquea la cuenta de un usuario")]
         public async Task<IActionResult> UnlockUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
+            if (user == null)
+                return NotFound();
 
-            // Establecer fecha de fin de bloqueo a null (o al pasado) desbloquea al usuario
+            // Establecer fecha de fin de bloqueo a null desbloquea al usuario
             var result = await _userManager.SetLockoutEndDateAsync(user, null);
-            if (!result.Succeeded) return BadRequest(result.Errors);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
             return Ok(new { Message = "Usuario desbloqueado correctamente" });
         }
