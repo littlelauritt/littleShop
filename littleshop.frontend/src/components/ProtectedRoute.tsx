@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { getToken, logout } from '../../assets/utils/auth';
+import { getToken, logout } from '../assets/utils/auth';
 
 // Definiciones de claims comunes
 // Usaremos estas claves para intentar extraer el rol del token

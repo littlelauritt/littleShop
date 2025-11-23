@@ -16,11 +16,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. BASE DE DATOS
+// ---------------------------------------------------------
+// 1. CONFIGURACIÓN DE SERVICIOS (Dependency Injection)
+// ---------------------------------------------------------
+
+// BASE DE DATOS
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
 
-// 2. IDENTITY
+// IDENTITY
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 8;
@@ -32,11 +36,9 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. OPENAPI NATIVO (V1)
+// OPENAPI NATIVO (V1)
 builder.Services.AddOpenApi("v1", options =>
 {
-    // A. DEFINIR EL ESQUEMA (DocumentTransformer)
-    // Aquí solo decimos "Existe un esquema llamado Bearer", pero no lo aplicamos a nadie todavía.
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Info.Title = "LittleShop Identity API V1";
@@ -58,12 +60,9 @@ builder.Services.AddOpenApi("v1", options =>
         };
 
         document.Components ??= new OpenApiComponents();
-
         document.Components.SecuritySchemes ??= new Dictionary<string, OpenApiSecurityScheme>();
 
-        
         var schemes = document.Components.SecuritySchemes;
-
         if (!schemes.ContainsKey("Bearer"))
         {
             schemes.Add("Bearer", securityScheme);
@@ -72,19 +71,14 @@ builder.Services.AddOpenApi("v1", options =>
         return Task.CompletedTask;
     });
 
-    // B. APLICAR EL CANDADO CONDICIONALMENTE (OperationTransformer)
-    // Esto se ejecuta por cada endpoint (Controller/Action).
     options.AddOperationTransformer((operation, context, cancellationToken) =>
     {
         var metadata = context.Description.ActionDescriptor.EndpointMetadata;
-
-        // Verificamos si tiene [Authorize] y NO tiene [AllowAnonymous]
         bool hasAuthorize = metadata.OfType<Microsoft.AspNetCore.Authorization.IAuthorizeData>().Any();
         bool hasAllowAnonymous = metadata.OfType<Microsoft.AspNetCore.Authorization.IAllowAnonymous>().Any();
 
         if (hasAuthorize && !hasAllowAnonymous)
         {
-            // Agregamos el requisito de seguridad SOLO a esta operación
             operation.Security = new List<OpenApiSecurityRequirement>
             {
                 new OpenApiSecurityRequirement
@@ -95,24 +89,21 @@ builder.Services.AddOpenApi("v1", options =>
                             Reference = new OpenApiReference
                             {
                                 Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer" // Debe coincidir con el Id definido arriba
+                                Id = "Bearer"
                             }
                         },
                         Array.Empty<string>()
                     }
                 }
             };
-
-            // Opcional: Indicar en la respuesta que puede devolver 401
             operation.Responses ??= new OpenApiResponses();
             operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
         }
-
         return Task.CompletedTask;
     });
 });
 
-// 4. JWT & AUTH
+// JWT & AUTH
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddScoped<JwtService>();
@@ -133,15 +124,12 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtOptions.Issuer,
         ValidAudience = jwtOptions.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key!)),
-
-        // BORRA O COMENTA ESTAS LÍNEAS SI LAS PUSISTE:
-        // RoleClaimType = "role"  <-- ¡FUERA! Ya no hace falta.
     };
 });
 
 builder.Services.AddAuthorization();
 
-// 5. VERSIONADO
+// VERSIONADO
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -155,46 +143,47 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
+// CORS (POLÍTICA)
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-    });
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            // Permitimos cualquier origen por el tema de puertos dinámicos de Aspire
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
 });
 
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// 6. MIGRACIÓN DB + SEED DE ROLES AUTOMÁTICO
+// ---------------------------------------------------------
+// 2. CONFIGURACIÓN DEL PIPELINE HTTP (Middleware)
+// ---------------------------------------------------------
+
+// MIGRACIÓN DB + SEED
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-    // Aplica migraciones pendientes
     await context.Database.MigrateAsync();
 
-    // Roles que queremos asegurar que existan
     string[] roles = new[] { "Admin", "User" };
-
     foreach (var roleName in roles)
     {
         if (!await roleManager.RoleExistsAsync(roleName))
         {
-            var result = await roleManager.CreateAsync(new IdentityRole(roleName));
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                throw new Exception($"No se pudo crear el rol '{roleName}': {errors}");
-            }
+            await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
 }
 
-// 7. PIPELINE HTTP
+// DOCUMENTACIÓN API
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -212,12 +201,27 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-app.UseCors();
+// =================================================================
+// 🚨 CORRECCIÓN CORS CRÍTICA 🚨
+// =================================================================
 
+// 1. CORS SIEMPRE VA PRIMERO.
+// Esto permite que el navegador reciba los headers "Access-Control-Allow-Origin"
+// incluso si la petición falla luego.
+app.UseCors("AllowFrontend");
+
+// 2. HTTPS REDIRECTION COMENTADO.
+// Esto es lo que causaba el error "Redirect is not allowed for a preflight request".
+// Al estar comentado, el servidor acepta HTTP plano desde el frontend en desarrollo.
+// app.UseHttpsRedirection(); 
+
+// =================================================================
+
+// AUTENTICACIÓN Y AUTORIZACIÓN
 app.UseAuthentication();
 app.UseAuthorization();
 
+// CONTROLADORES
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
 app.MapGet("/help", () => Results.Ok(new

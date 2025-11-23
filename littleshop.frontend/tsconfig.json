@@ -1,21 +1,30 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
-
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": [ "ES2020", "DOM", "DOM.Iterable" ],
     "module": "ESNext",
-    "lib": [ "DOM", "ESNext" ],
-    "jsx": "react-jsx",
-    "strict": true,
-    "moduleResolution": "Node",
-    "esModuleInterop": true,
     "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting: Relajamos reglas para que no molesten los imports de React sobrantes */
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Compatibilidad y Tipos */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "types": [ "vite/client" ]
+    "types": [ "vite/client" ] /* SOLUCIÓN IMPORTANTE para import.meta */
   },
-  "include": [ "src" ]
+  "include": [ "src/**/*", "vite.config.ts" ]
 }
