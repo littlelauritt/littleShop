@@ -39,7 +39,8 @@
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 		<PackageReference Include="Scalar.AspNetCore" />
 		<PackageReference Include="Swashbuckle.AspNetCore" />
-
+		
+		<ProjectReference Include="..\littleshop.serviceDefaults\littleshop.serviceDefaults.csproj" />
 	</ItemGroup>
 
 </Project>

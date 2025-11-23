@@ -3,12 +3,15 @@ import { Navigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { getToken, logout } from '../../assets/utils/auth';
 
-// Ahora sabemos con certeza que la clave es 'role'
-const ROLE_CLAIM = 'role';
+// 1. DEFINIMOS LA CLAVE LARGA QUE USA MICROSOFT
+const MICROSOFT_ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
 interface JwtPayload {
     exp: number;
-    [ROLE_CLAIM]?: string | string[]; // Puede ser string o array de strings
+    // Definimos que puede venir 'role' (corto) o la URL larga
+    role?: string | string[];
+    [MICROSOFT_ROLE_CLAIM]?: string | string[];
+    // Permitimos otras propiedades
     [key: string]: unknown;
 }
 
@@ -29,16 +32,32 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
         const decoded = jwtDecode<JwtPayload>(token);
         let userRole: string | undefined;
 
-        // --- Extracción de Rol (Lógica Limpia) ---
-        const roleClaimValue = decoded[ROLE_CLAIM];
+        // --- LÓGICA DE EXTRACCIÓN DE ROL ---
 
-        if (roleClaimValue) {
-            if (Array.isArray(roleClaimValue)) {
-                // Si el usuario tiene múltiples roles, tomamos el primero
-                userRole = roleClaimValue[0];
+        // A. Intentamos leer la clave larga de Microsoft (Prioridad 1)
+        const longClaim = decoded[MICROSOFT_ROLE_CLAIM];
+
+        // B. Intentamos leer la clave corta estándar (Prioridad 2)
+        const shortClaim = decoded.role;
+
+        // Decidimos cuál usar
+        const roleValue = longClaim || shortClaim;
+
+        if (roleValue) {
+            if (Array.isArray(roleValue)) {
+                // Si tiene múltiples roles, tomamos el primero (o podrías verificar si ALGUNO coincide)
+                // Para simplificar, aquí buscamos si alguno de los roles del usuario está en allowedRoles
+                const hasMatchingRole = roleValue.some(r => allowedRoles.includes(r));
+                if (hasMatchingRole) {
+                    // Si encontramos coincidencia, asignamos un rol válido para pasar la validación de abajo
+                    // (Esto es un truco: asignamos el primer rol permitido que encontramos)
+                    userRole = roleValue.find(r => allowedRoles.includes(r));
+                } else {
+                    userRole = roleValue[0]; // Si no coincide ninguno, guardamos el primero para el log de error
+                }
             } else {
                 // Si es un solo rol (string)
-                userRole = roleClaimValue as string;
+                userRole = roleValue as string;
             }
         }
 
@@ -53,15 +72,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 
         // 3. Verificación de existencia del Rol
         if (!userRole) {
-            console.error("Error Crítico: El token es válido pero no contiene el campo 'role'.");
+            console.error("Error Crítico: El token es válido pero no se encontró ningún rol (ni corto ni largo).");
+            // Imprimimos el token para depurar si vuelve a fallar
+            console.log("Token decodificado:", decoded);
             logout();
             return <Navigate to="/login" replace />;
         }
 
         // 4. Verificar si el rol tiene permiso
         if (!allowedRoles.includes(userRole)) {
-            console.warn(`Acceso denegado: El rol '${userRole}' no tiene permiso aquí.`);
-            // Si es Admin intentando entrar, o User intentando entrar a Admin
+            console.warn(`Acceso denegado: El rol '${userRole}' no está en la lista permitida [${allowedRoles.join(', ')}].`);
             return <Navigate to="/profile" replace />;
         }
 

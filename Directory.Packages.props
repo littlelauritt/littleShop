@@ -1,40 +1,46 @@
 <Project>
-	<PropertyGroup>
-		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-	</PropertyGroup>
-	
-	<ItemGroup>
-		<!-- Aspire y Drivers (Compatibles con v9) -->
-		<PackageVersion Include="Aspire.Hosting.AppHost" Version="13.0.0" />
-		<PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.0.0" />
-		<PackageVersion Include="Aspire.Npgsql" Version="9.5.2" />
-		<PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.5.2" />
-		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0-preview.2.25163.8" />
-		<PackageVersion Include="Npgsql" Version="9.0.4" />
-		<PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-preview.2" />
-		<!-- IDENTITY Y OPENAPI (Se pueden quedar en 10 o bajar a 9, probamos con 10 primero) -->
-		<PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.1.25120.3" />
-		<PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0-preview.1.25120.3" />
-		<PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.1.25120.3" />
-		<!-- Esto elimina el conflicto con la herramienta dotnet-ef -->
-		<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.2.25163.8" />
-		<PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-preview.2.25163.8" />
-		
-		<!-- Resto de paquetes -->
-		<PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.0" />
-		<PackageVersion Include="Asp.Versioning.Http" Version="8.1.0" />
-		<PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
-		<PackageVersion Include="Scalar.AspNetCore" Version="2.0.0" />
-		<PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-		<PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
-		<PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2" />
-		<PackageVersion Include="Microsoft.OpenApi" Version="1.6.14" />
-		<PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-		<PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
-		<PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
-		<PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
-		<PackageVersion Include="ServiceStack.OrmLite" Version="8.4.0" />
-		<PackageVersion Include="ServiceStack.OrmLite.PostgreSQL" Version="8.4.0" />
-		
-	</ItemGroup>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Aspire y Drivers (Compatibles con v9) -->
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.0.0" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.0.0" />
+    <PackageVersion Include="Aspire.Npgsql" Version="9.5.2" />
+    <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.5.2" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0-preview.2.25163.8" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.0.0" />
+    <PackageVersion Include="Npgsql" Version="9.0.4" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-preview.2" />
+    <!-- IDENTITY Y OPENAPI (Se pueden quedar en 10 o bajar a 9, probamos con 10 primero) -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.1.25120.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0-preview.1.25120.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-preview.1.25120.3" />
+    <!-- Esto elimina el conflicto con la herramienta dotnet-ef -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.2.25163.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-preview.2.25163.8" />
+    <!-- Resto de paquetes -->
+    <PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageVersion Include="Asp.Versioning.Http" Version="8.1.0" />
+    <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.0.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="1.6.14" />
+    <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+    <PackageVersion Include="ServiceStack.OrmLite" Version="8.4.0" />
+    <PackageVersion Include="ServiceStack.OrmLite.PostgreSQL" Version="8.4.0" />
+	  <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.0.0" />
+	  <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.0.0" />
+
+	  <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.1" />
+	  <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.11.1" />
+	  <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.1" />
+	  <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.11.1" />
+	  <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.11.1" />
+  </ItemGroup>
 </Project>

@@ -13,8 +13,14 @@ using System.Reflection;
 using Scalar.AspNetCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using littleshop.serviceDefaults; // <--- 1. NUEVO: Importamos la biblioteca compartida
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ---------------------------------------------------------
+// 0. ASPIRE SERVICE DEFAULTS (¡CRUCIAL!)
+// ---------------------------------------------------------
+builder.AddServiceDefaults(); // <--- 2. NUEVO: Activa el descubrimiento de servicios
 
 // ---------------------------------------------------------
 // 1. CONFIGURACIÓN DE SERVICIOS (Dependency Injection)
@@ -161,7 +167,12 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 // ---------------------------------------------------------
-// 2. CONFIGURACIÓN DEL PIPELINE HTTP (Middleware)
+// 3. CONFIGURACIÓN DE HEALTH CHECKS (¡CRUCIAL!)
+// ---------------------------------------------------------
+app.MapDefaultEndpoints(); // <--- 3. NUEVO: Crea las rutas /health y /alive para el Gateway
+
+// ---------------------------------------------------------
+// 4. CONFIGURACIÓN DEL PIPELINE HTTP (Middleware)
 // ---------------------------------------------------------
 
 // MIGRACIÓN DB + SEED
@@ -206,13 +217,9 @@ if (app.Environment.IsDevelopment())
 // =================================================================
 
 // 1. CORS SIEMPRE VA PRIMERO.
-// Esto permite que el navegador reciba los headers "Access-Control-Allow-Origin"
-// incluso si la petición falla luego.
 app.UseCors("AllowFrontend");
 
 // 2. HTTPS REDIRECTION COMENTADO.
-// Esto es lo que causaba el error "Redirect is not allowed for a preflight request".
-// Al estar comentado, el servidor acepta HTTP plano desde el frontend en desarrollo.
 // app.UseHttpsRedirection(); 
 
 // =================================================================
