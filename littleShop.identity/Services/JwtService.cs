@@ -28,15 +28,18 @@ namespace littleShop.identity.Services
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
-            {
-                // Usamos JwtRegisteredClaimNames para estándares
-                new Claim(JwtRegisteredClaimNames.Sub, userId),
-                new Claim(JwtRegisteredClaimNames.Email, email),
-                
-                //  CAMBIO CRÍTICO: 
-                // En lugar de ClaimTypes.Role (que genera una URL larga), 
-                // forzamos la clave simple "role".
-                new Claim("role", role),
+{
+                // 1. CAMBIO: Usar ClaimTypes.NameIdentifier en lugar de JwtRegisteredClaimNames.Sub
+                // Esto asegura que User.FindFirstValue(ClaimTypes.NameIdentifier) funcione siempre.
+                new Claim(ClaimTypes.NameIdentifier, userId),
+    
+                // 2. Usar ClaimTypes.Email (Opcional, pero recomendado para consistencia)
+                new Claim(ClaimTypes.Email, email),
+
+                // 3. CAMBIO CRÍTICO: Usar ClaimTypes.Role
+                // Esto genera el claim largo: "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                // Al hacer esto, [Authorize(Roles="Admin")] funcionará automáticamente.
+                new Claim(ClaimTypes.Role, role),
 
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };

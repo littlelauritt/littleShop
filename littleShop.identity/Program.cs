@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using Projects.littleShop_identity.Data;
 using System.Text;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -34,10 +35,79 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 // 3. OPENAPI NATIVO (V1)
 builder.Services.AddOpenApi("v1", options =>
 {
+    // A. DEFINIR EL ESQUEMA (DocumentTransformer)
+    // Aquí solo decimos "Existe un esquema llamado Bearer", pero no lo aplicamos a nadie todavía.
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Info.Title = "LittleShop Identity API V1";
         document.Info.Version = "v1";
+
+        var securityScheme = new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Description = "JWT Authorization header using the Bearer scheme.",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Reference = new OpenApiReference
+            {
+                Id = "Bearer",
+                Type = ReferenceType.SecurityScheme
+            }
+        };
+
+        document.Components ??= new OpenApiComponents();
+
+        document.Components.SecuritySchemes ??= new Dictionary<string, OpenApiSecurityScheme>();
+
+        
+        var schemes = document.Components.SecuritySchemes;
+
+        if (!schemes.ContainsKey("Bearer"))
+        {
+            schemes.Add("Bearer", securityScheme);
+        }
+
+        return Task.CompletedTask;
+    });
+
+    // B. APLICAR EL CANDADO CONDICIONALMENTE (OperationTransformer)
+    // Esto se ejecuta por cada endpoint (Controller/Action).
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+
+        // Verificamos si tiene [Authorize] y NO tiene [AllowAnonymous]
+        bool hasAuthorize = metadata.OfType<Microsoft.AspNetCore.Authorization.IAuthorizeData>().Any();
+        bool hasAllowAnonymous = metadata.OfType<Microsoft.AspNetCore.Authorization.IAllowAnonymous>().Any();
+
+        if (hasAuthorize && !hasAllowAnonymous)
+        {
+            // Agregamos el requisito de seguridad SOLO a esta operación
+            operation.Security = new List<OpenApiSecurityRequirement>
+            {
+                new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer" // Debe coincidir con el Id definido arriba
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                }
+            };
+
+            // Opcional: Indicar en la respuesta que puede devolver 401
+            operation.Responses ??= new OpenApiResponses();
+            operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
+        }
+
         return Task.CompletedTask;
     });
 });
@@ -62,7 +132,10 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtOptions.Issuer,
         ValidAudience = jwtOptions.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key!)),
+
+        // BORRA O COMENTA ESTAS LÍNEAS SI LAS PUSISTE:
+        // RoleClaimType = "role"  <-- ¡FUERA! Ya no hace falta.
     };
 });
 

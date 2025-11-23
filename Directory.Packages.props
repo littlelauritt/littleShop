@@ -19,7 +19,7 @@
 		<!-- Esto elimina el conflicto con la herramienta dotnet-ef -->
 		<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0-preview.2.25163.8" />
 		<PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-preview.2.25163.8" />
-		<PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-preview.2.25163.8" />
+		
 		<!-- Resto de paquetes -->
 		<PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.0" />
 		<PackageVersion Include="Asp.Versioning.Http" Version="8.1.0" />
@@ -35,5 +35,6 @@
 		<PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
 		<PackageVersion Include="ServiceStack.OrmLite" Version="8.4.0" />
 		<PackageVersion Include="ServiceStack.OrmLite.PostgreSQL" Version="8.4.0" />
+		
 	</ItemGroup>
 </Project>
