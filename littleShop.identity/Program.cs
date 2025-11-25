@@ -13,17 +13,15 @@ using System.Reflection;
 using Scalar.AspNetCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using littleshop.serviceDefaults; // <--- 1. NUEVO: Importamos la biblioteca compartida
+using littleshop.serviceDefaults; 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---------------------------------------------------------
-// 0. ASPIRE SERVICE DEFAULTS (¡CRUCIAL!)
-// ---------------------------------------------------------
-builder.AddServiceDefaults(); // <--- 2. NUEVO: Activa el descubrimiento de servicios
+
+builder.AddServiceDefaults(); 
 
 // ---------------------------------------------------------
-// 1. CONFIGURACIÓN DE SERVICIOS (Dependency Injection)
+// CONFIGURACIÓN DE SERVICIOS (Dependency Injection)
 // ---------------------------------------------------------
 
 // BASE DE DATOS
@@ -155,7 +153,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            // Permitimos cualquier origen por el tema de puertos dinámicos de Aspire
+            
             policy.AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
@@ -167,9 +165,9 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 // ---------------------------------------------------------
-// 3. CONFIGURACIÓN DE HEALTH CHECKS (¡CRUCIAL!)
+// 3. CONFIGURACIÓN DE HEALTH CHECKS 
 // ---------------------------------------------------------
-app.MapDefaultEndpoints(); // <--- 3. NUEVO: Crea las rutas /health y /alive para el Gateway
+app.MapDefaultEndpoints(); 
 
 // ---------------------------------------------------------
 // 4. CONFIGURACIÓN DEL PIPELINE HTTP (Middleware)
@@ -212,17 +210,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// =================================================================
-// 🚨 CORRECCIÓN CORS CRÍTICA 🚨
-// =================================================================
 
 // 1. CORS SIEMPRE VA PRIMERO.
 app.UseCors("AllowFrontend");
 
 // 2. HTTPS REDIRECTION COMENTADO.
 // app.UseHttpsRedirection(); 
-
-// =================================================================
 
 // AUTENTICACIÓN Y AUTORIZACIÓN
 app.UseAuthentication();

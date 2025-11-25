@@ -12,6 +12,7 @@
 		<!-- Paquetes del orquestador (Versiones gestionadas por Directory.Packages.props) -->
 		<PackageReference Include="Aspire.Hosting.AppHost" />
 		<PackageReference Include="Aspire.Hosting.PostgreSQL" />
+		<PackageReference Include="Aspire.Hosting.Redis" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
 		<!-- Referencias a tus microservicios -->
 		<ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />

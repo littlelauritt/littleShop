@@ -7,7 +7,6 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-// IMPORTANTE: Todo minúsculas para que coincida con tu Gateway
 namespace littleshop.serviceDefaults;
 
 public static class Extensions
@@ -24,7 +23,7 @@ public static class Extensions
             http.AddServiceDiscovery();
         });
 
-        // Aquí añadimos los HealthChecks que faltaban y daban el error de ejecución
+        
         builder.Services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
 
@@ -74,8 +73,7 @@ public static class Extensions
         // Rutas de salud usadas por Aspire Dashboard
         if (app.Environment.IsDevelopment())
         {
-            // En desarrollo mostramos más info si es necesario, 
-            // pero las rutas base son estas:
+            
         }
 
         app.MapHealthChecks("/health");
