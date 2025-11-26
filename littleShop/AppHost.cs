@@ -8,17 +8,18 @@ var postgresContainer = builder.AddPostgres("postgres")
     .WithDataVolume("littleshop-postgres-data")
     .WithHostPort(5432)
     .WithLifetime(ContainerLifetime.Persistent)
-    // NUEVO: Añadimos la interfaz visual pgAdmin en el puerto 5050
     .WithPgAdmin(pg => pg.WithHostPort(5050));
 
-var littleShopDb = postgresContainer.AddDatabase("littleshop-db");
+// Definimos las 3 bases de datos
+var littleShopDb = postgresContainer.AddDatabase("littleshop-db"); // Usuarios
+var catalogDb = postgresContainer.AddDatabase("catalogdb");        // Productos
+var ordersDb = postgresContainer.AddDatabase("ordersdb");          // Pedidos (Futuro)
 
-// --- 2. Redis (NUEVO) ---
-// Añadimos Redis para caché y Rate Limiting futuro
+// --- 2. Redis ---
 var redis = builder.AddRedis("redis")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume("littleshop-redis-data")
-    .WithRedisInsight(); // Añade la interfaz visual para ver la caché
+    .WithRedisInsight();
 
 // --- 3. Identity Service ---
 var identityService = builder.AddProject<Projects.littleShop_identity>("littleshop-identity")
@@ -27,16 +28,26 @@ var identityService = builder.AddProject<Projects.littleShop_identity>("littlesh
     .WithHttpEndpoint(name: "identity-http")
     .WithExternalHttpEndpoints();
 
-// --- 4. API GATEWAY ---
+// --- 4. CATALOG SERVICE (Lo ponemos aquí ordenado) ---
+// Guardamos la variable 'catalogService' para pasársela luego al Gateway
+var catalogService = builder.AddProject<Projects.littleShop_catalog>("littleshop-catalog")
+    .WithReference(catalogDb)  // <--- CORRECTO: Usa su propia DB
+    .WaitFor(catalogDb)
+    .WithHttpEndpoint(name: "catalog-http");
+
+// --- 5. API GATEWAY ---
 var apiGateway = builder.AddProject<Projects.littleshop_apiGateway>("littleshop-apigateway")
+    // Referencias a servicios
     .WithReference(identityService)
     .WaitFor(identityService)
-    // NUEVO: El Gateway necesita Redis para poder limitar peticiones más adelante
+    .WithReference(catalogService) // <--- ¡IMPORTANTE! Añadido para que espere al catálogo
+    .WaitFor(catalogService)
+    // Referencia a Redis
     .WithReference(redis)
     .WaitFor(redis)
     .WithHttpEndpoint(name: "gateway-http");
 
-// --- 5. Frontend ---
+// --- 6. Frontend ---
 var frontendPath = Path.Combine(builder.AppHostDirectory, "..", "littleshop.frontend");
 
 var frontendApp = builder.AddExecutable("littleshop-frontend", "npm", frontendPath, "run", "dev")
@@ -44,5 +55,6 @@ var frontendApp = builder.AddExecutable("littleshop-frontend", "npm", frontendPa
     .WithEnvironment("VITE_IDENTITY_API_URL", $"{apiGateway.GetEndpoint("gateway-http")}/api/identity")
     .WithReference(apiGateway)
     .WaitFor(apiGateway);
+
 
 builder.Build().Run();

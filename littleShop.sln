@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución",
 		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.catalog", "littleShop.catalog\littleShop.catalog.csproj", "{D150B7BA-B575-E630-71E6-1022FC57B909}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DAF7F9D-9C30-1746-4C2F-FEF486ABF977}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D150B7BA-B575-E630-71E6-1022FC57B909}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D150B7BA-B575-E630-71E6-1022FC57B909}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D150B7BA-B575-E630-71E6-1022FC57B909}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D150B7BA-B575-E630-71E6-1022FC57B909}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

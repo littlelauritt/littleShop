@@ -13,7 +13,11 @@
 		<PackageReference Include="Aspire.Hosting.AppHost" />
 		<PackageReference Include="Aspire.Hosting.PostgreSQL" />
 		<PackageReference Include="Aspire.Hosting.Redis" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<ProjectReference Include="..\littleShop.catalog\littleShop.catalog.csproj" />
 		<!-- Referencias a tus microservicios -->
 		<ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />
 		<ProjectReference Include="..\littleshop.apiGateway\littleshop.apiGateway.csproj" />

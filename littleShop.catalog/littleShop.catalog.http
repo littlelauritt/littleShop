@@ -1,0 +1,6 @@
+@littleShop.catalog_HostAddress = http://localhost:5110
+
+GET {{littleShop.catalog_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
