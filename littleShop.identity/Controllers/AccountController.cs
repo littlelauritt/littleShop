@@ -6,10 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using Projects.littleShop_identity.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http.Metadata;
+using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
+using littleShop.identity.Events; 
 
 namespace littleShop.identity.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     [Tags("🔑 Autenticación (Cuenta y Login)")]
@@ -18,10 +21,18 @@ namespace littleShop.identity.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly JwtService _jwtService;
 
-        public AccountController(UserManager<IdentityUser> userManager, JwtService jwtService)
+        // 1. NUEVA VARIABLE PARA LA CONEXIÓN RABBITMQ
+        private readonly IConnection _rabbitConnection;
+
+        // 2. INYECTAMOS LA CONEXIÓN EN EL CONSTRUCTOR
+        public AccountController(
+            UserManager<IdentityUser> userManager,
+            JwtService jwtService,
+            IConnection rabbitConnection) // <--- AÑADIDO
         {
             _userManager = userManager;
             _jwtService = jwtService;
+            _rabbitConnection = rabbitConnection; // <--- GUARDADO
         }
 
         [AllowAnonymous]
@@ -40,6 +51,43 @@ namespace littleShop.identity.Controllers
                 return BadRequest(result.Errors);
 
             await _userManager.AddToRoleAsync(user, Roles.User);
+
+            // ============================================================
+            // 3. CÓDIGO PARA ENVIAR EVENTO A RABBITMQ
+            // ============================================================
+            try
+            {
+                // 1. Crear el canal (AHORA ES ASÍNCRONO)
+                using var channel = await _rabbitConnection.CreateChannelAsync();
+
+                // 2. Declarar la cola (AHORA ES ASÍNCRONO)
+                await channel.QueueDeclareAsync(
+                    queue: "user-created",
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+
+                // 3. Preparar el mensaje
+                var eventData = new UserCreatedEvent(user.Id, user.Email!, DateTime.UtcNow);
+                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eventData));
+
+                // 4. Publicar (AHORA ES ASÍNCRONO y cambia un poco la firma)
+                // Nota: BasicProperties es obligatorio, usamos uno vacío
+                var props = new RabbitMQ.Client.BasicProperties();
+
+                await channel.BasicPublishAsync(
+                    exchange: "",
+                    routingKey: "user-created",
+                    mandatory: false,
+                    basicProperties: props,
+                    body: body);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Error enviando evento a RabbitMQ: {ex.Message}");
+            }
+            // ============================================================
 
             return Ok(new { Message = "Usuario registrado con éxito" });
         }
@@ -63,10 +111,10 @@ namespace littleShop.identity.Controllers
             // 4. Generar el Token JWT
             var roles = await _userManager.GetRolesAsync(user);
 
-            // Obtenemos el rol principal o "User" por defecto si la lista viniera vacía por error de DB
+            // Obtenemos el rol principal o "User" por defecto
             var primaryRole = roles.FirstOrDefault() ?? Roles.User;
 
-            // Aquí es donde corregimos el error CS8604 asegurando que user.Email no es nulo
+            // Generamos el token
             var token = await _jwtService.GenerateJwtAsync(user.Id, user.Email, primaryRole);
 
             return Ok(token);

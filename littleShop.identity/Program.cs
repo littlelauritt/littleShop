@@ -103,6 +103,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
+builder.AddRabbitMQClient("messaging");
 
 var app = builder.Build();
 

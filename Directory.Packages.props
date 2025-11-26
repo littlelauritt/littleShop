@@ -24,7 +24,7 @@
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.0.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.6.2" />
-	<PackageVersion Include="Microsoft.OpenApi" Version="2.3.0" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.3.0" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
@@ -41,5 +41,7 @@
     <PackageVersion Include="Aspire.StackExchange.Redis" Version="13.0.0" />
     <PackageVersion Include="RedisRateLimiting" Version="1.2.0" />
     <PackageVersion Include="RedisRateLimiting.AspNetCore" Version="1.2.0" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.0.1" />
+    <PackageVersion Include="Aspire.RabbitMQ.Client" Version="13.0.1" />
   </ItemGroup>
 </Project>
