@@ -23,6 +23,7 @@
 		<ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />
 		<ProjectReference Include="..\littleshop.apiGateway\littleshop.apiGateway.csproj" />
 		<ProjectReference Include="..\littleshop.frontend\littleshop.frontend.esproj" />
+		<ProjectReference Include="..\littleShop.notifications\littleShop.notifications.csproj" />
 		<ProjectReference Include="..\littleShop.orders\littleShop.orders.csproj" />
 		
 		

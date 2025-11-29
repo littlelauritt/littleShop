@@ -18,6 +18,8 @@
 		<!-- Base de datos -->
 		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Aspire.RabbitMQ.Client" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+		<PackageReference Include="MassTransit.RabbitMQ" />
 
 		<!-- Identity -->
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
@@ -44,6 +46,8 @@
 		<PackageReference Include="Microsoft.OpenApi" />
 		
 		<ProjectReference Include="..\littleshop.serviceDefaults\littleshop.serviceDefaults.csproj" />
+		
+		<ProjectReference Include="..\littleShop.Shared\littleShop.Shared.csproj" />
 	</ItemGroup>
 
 </Project>

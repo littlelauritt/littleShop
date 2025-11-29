@@ -3,68 +3,64 @@ using System.IO;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// --- PostgreSQL (Con pgAdmin) ---
+// --- 1. PostgreSQL ---
 var postgresContainer = builder.AddPostgres("postgres")
     .WithDataVolume("littleshop-postgres-data")
     .WithHostPort(5432)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgAdmin(pg => pg.WithHostPort(5050));
 
-// Definimos las 3 bases de datos
-var littleShopDb = postgresContainer.AddDatabase("littleshop-db"); // Usuarios
-var catalogDb = postgresContainer.AddDatabase("catalogdb");        // Productos
-var ordersDb = postgresContainer.AddDatabase("ordersdb");          // Pedidos (Futuro)
+var littleShopDb = postgresContainer.AddDatabase("littleshop-db");
+var catalogDb = postgresContainer.AddDatabase("catalogdb");
+var ordersDb = postgresContainer.AddDatabase("ordersdb");
 
-// --- RABBITMQ ---
+// --- 2. RabbitMQ ---
 var rabbit = builder.AddRabbitMQ("messaging")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithManagementPlugin();
 
-// --- Redis ---
+// --- 3. Redis ---
 var redis = builder.AddRedis("redis")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume("littleshop-redis-data")
     .WithRedisInsight();
 
-// --- Identity Service ---
+// --- 4. Identity ---
 var identityService = builder.AddProject<Projects.littleShop_identity>("littleshop-identity")
     .WithReference(littleShopDb)
     .WaitFor(littleShopDb)
-    .WithReference(rabbit)
+    .WithReference(rabbit) // Identity envía mensajes
     .WaitFor(rabbit)
     .WithHttpEndpoint(name: "identity-http")
     .WithExternalHttpEndpoints();
 
-// --- CATALOG SERVICE ---
+// --- 5. Catalog ---
 var catalogService = builder.AddProject<Projects.littleShop_catalog>("littleshop-catalog")
     .WithReference(catalogDb)
     .WaitFor(catalogDb)
     .WithHttpEndpoint(name: "catalog-http");
 
-// --- ORDERS SERVICE  ---
-// Lo definimos ANTES del Gateway para poder pasárselo como referencia
+// --- 6. Orders ---
 var ordersService = builder.AddProject<Projects.littleShop_orders>("littleshop-orders")
     .WithReference(ordersDb)
     .WaitFor(ordersDb)
     .WithHttpEndpoint(name: "orders-http");
 
-// --- API GATEWAY ---
+// --- 7. NOTIFICATIONS WORKER (¡CORREGIDO!) ---
+builder.AddProject<Projects.littleShop_notifications>("littleshop-notifications")
+    .WithReference(rabbit)
+    .WaitFor(rabbit);
+
+// --- 8. Gateway ---
 var apiGateway = builder.AddProject<Projects.littleshop_apiGateway>("littleshop-apigateway")
-    // Referencias a servicios
-    .WithReference(identityService)
-    .WaitFor(identityService)
-    .WithReference(catalogService)
-    .WaitFor(catalogService)
-    .WithReference(ordersService) // <--- Ahora sí funciona porque ya está declarado arriba
-    .WaitFor(ordersService)
-    // Referencia a Redis
-    .WithReference(redis)
-    .WaitFor(redis)
+    .WithReference(identityService).WaitFor(identityService)
+    .WithReference(catalogService).WaitFor(catalogService)
+    .WithReference(ordersService).WaitFor(ordersService)
+    .WithReference(redis).WaitFor(redis)
     .WithHttpEndpoint(name: "gateway-http");
 
-// --- Frontend ---
+// --- 9. Frontend ---
 var frontendPath = Path.Combine(builder.AppHostDirectory, "..", "littleshop.frontend");
-
 var frontendApp = builder.AddExecutable("littleshop-frontend", "npm", frontendPath, "run", "dev")
     .WithHttpEndpoint(env: "PORT", name: "frontend-http")
     .WithEnvironment("VITE_IDENTITY_API_URL", $"{apiGateway.GetEndpoint("gateway-http")}/api/identity")

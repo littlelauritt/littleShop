@@ -12,13 +12,46 @@ using System.Reflection;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using littleshop.serviceDefaults;
+using FluentValidation; // <--- MIÉRCOLES
+using MassTransit;      // <--- JUEVES
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
 // ---------------------------------------------------------
-// 1. BASE DE DATOS E IDENTITY
+// 1. CONFIGURACIÓN RABBITMQ (MassTransit)
+// ---------------------------------------------------------
+builder.Services.AddMassTransit(bus =>
+{
+    bus.SetKebabCaseEndpointNameFormatter();
+
+    bus.UsingRabbitMq((context, cfg) =>
+    {
+        // Usamos la cadena de conexión completa que Aspire nos da
+        var configuration = context.GetRequiredService<IConfiguration>();
+        var connectionString = configuration.GetConnectionString("messaging");
+
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            cfg.Host(new Uri(connectionString));
+        }
+        else
+        {
+            // Fallback por si acaso (aunque no debería entrar aquí)
+            cfg.Host("messaging", "/");
+        }
+    });
+});
+
+// ---------------------------------------------------------
+// 2. CONFIGURACIÓN FLUENT VALIDATION
+// ---------------------------------------------------------
+// Escanea el proyecto y registra todos los validadores (como el que acabamos de crear)
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+// ---------------------------------------------------------
+// 3. BASE DE DATOS E IDENTITY
 // ---------------------------------------------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
@@ -35,10 +68,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // ---------------------------------------------------------
-// 2. OPENAPI (VERSIÓN SIMPLIFICADA PARA QUE COMPILE)
+// 4. OPENAPI (Simplificado para compilar en .NET 10)
 // ---------------------------------------------------------
-// Hemos quitado la configuración compleja de seguridad para evitar
-// los conflictos de versiones con Microsoft.OpenApi v2.3.0
 builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
@@ -50,7 +81,7 @@ builder.Services.AddOpenApi("v1", options =>
 });
 
 // ---------------------------------------------------------
-// 3. JWT & AUTH
+// 5. JWT & AUTH
 // ---------------------------------------------------------
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddSingleton(jwtOptions);
@@ -78,7 +109,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 // ---------------------------------------------------------
-// 4. VERSIONADO
+// 6. VERSIONADO
 // ---------------------------------------------------------
 builder.Services.AddApiVersioning(options =>
 {
@@ -94,7 +125,7 @@ builder.Services.AddApiVersioning(options =>
 });
 
 // ---------------------------------------------------------
-// 5. CORS
+// 7. CORS
 // ---------------------------------------------------------
 builder.Services.AddCors(options =>
 {
@@ -103,14 +134,13 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
-builder.AddRabbitMQClient("messaging");
 
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
 // ---------------------------------------------------------
-// 6. MIDDLEWARES
+// 8. MIDDLEWARES
 // ---------------------------------------------------------
 
 // Migraciones automáticas
