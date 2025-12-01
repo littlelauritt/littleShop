@@ -25,6 +25,11 @@ var redis = builder.AddRedis("redis")
     .WithDataVolume("littleshop-redis-data")
     .WithRedisInsight();
 
+// --- NUEVO: MAILDEV (Servidor SMTP falso) ---
+var maildev = builder.AddContainer("maildev", "maildev/maildev")
+    .WithHttpEndpoint(targetPort: 1080, name: "maildev-dashboard") // Para ver los emails en web
+    .WithEndpoint(targetPort: 1025, name: "smtp"); // Puerto para enviar correos
+
 // --- 4. Identity ---
 var identityService = builder.AddProject<Projects.littleShop_identity>("littleshop-identity")
     .WithReference(littleShopDb)
@@ -48,8 +53,9 @@ var ordersService = builder.AddProject<Projects.littleShop_orders>("littleshop-o
 
 // --- 7. NOTIFICATIONS WORKER (¡CORREGIDO!) ---
 builder.AddProject<Projects.littleShop_notifications>("littleshop-notifications")
-    .WithReference(rabbit)
-    .WaitFor(rabbit);
+    .WithReference(rabbit).WaitFor(rabbit)
+    //.WithReference(maildev)
+    .WithEnvironment("SMTP_HOST", maildev.GetEndpoint("smtp"));
 
 // --- 8. Gateway ---
 var apiGateway = builder.AddProject<Projects.littleshop_apiGateway>("littleshop-apigateway")

@@ -1,10 +1,11 @@
 using littleshop.serviceDefaults;
 using littleShop.notifications.Consumers; // Tu carpeta de consumidores
 using MassTransit;
-
+using littleShop.notifications.Services;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 builder.Services.AddMassTransit(x =>
 {

@@ -16,6 +16,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{B122B756-3E9B-4328-9964-426DA7F7A2DF}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Packages.props = Directory.Packages.props
+		load-test.js = load-test.js
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.catalog", "littleShop.catalog\littleShop.catalog.csproj", "{D150B7BA-B575-E630-71E6-1022FC57B909}"

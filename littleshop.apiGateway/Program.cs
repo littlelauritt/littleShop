@@ -16,6 +16,7 @@ builder.AddRedisClient("redis");
 // 2. RATE LIMITING (Definimos las políticas que usa el profesor)
 builder.Services.AddRateLimiter(rateLimiterOptions =>
 {
+    rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     // Política "anonymous": Para rutas públicas (Login/Register)
     rateLimiterOptions.AddPolicy("anonymous", context =>
     {
