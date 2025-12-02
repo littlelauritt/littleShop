@@ -73,7 +73,7 @@ var apiGateway = builder.AddProject<Projects.littleshop_apiGateway>("littleshop-
 var frontendPath = Path.Combine(builder.AppHostDirectory, "..", "littleshop.frontend");
 var frontendApp = builder.AddExecutable("littleshop-frontend", "npm", frontendPath, "run", "dev")
     .WithHttpEndpoint(env: "PORT", name: "frontend-http")
-    .WithEnvironment("VITE_IDENTITY_API_URL", $"{apiGateway.GetEndpoint("gateway-http")}/api/identity")
+    .WithEnvironment("VITE_GATEWAY_URL", apiGateway.GetEndpoint("gateway-http"))
     .WithReference(apiGateway)
     .WaitFor(apiGateway);
 

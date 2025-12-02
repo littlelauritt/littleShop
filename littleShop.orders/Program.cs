@@ -104,12 +104,14 @@ api.MapGet("/", async (OrderService service, ClaimsPrincipal user) =>
 api.MapPost("/", async (CreateOrderRequest request, OrderService service, ClaimsPrincipal user) =>
 {
     var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-    // Necesitamos el email para guardarlo en la BD
-    var email = user.FindFirstValue(ClaimTypes.Email) ?? user.FindFirstValue("email");
+    var email = user.FindFirstValue(ClaimTypes.Email) ?? user.FindFirstValue("email"); // Intentamos obtener el email
 
-    if (userId == null || email == null) return Results.Unauthorized();
+    if (userId == null) return Results.Unauthorized();
+    // Si el email es nulo, ponemos uno por defecto para que no falle la BD, 
+    // pero idealmente el token debería tenerlo.
+    var safeEmail = email ?? "unknown@littleshop.local";
 
-    var result = await service.CreateOrderAsync(userId, email, request);
+    var result = await service.CreateOrderAsync(userId, safeEmail, request);
 
     if (!result.Succeeded)
         return Results.BadRequest(new { Error = result.Errors });
@@ -117,13 +119,12 @@ api.MapPost("/", async (CreateOrderRequest request, OrderService service, Claims
     return Results.Created($"/api/v1/orders/{result.Data!.Id}", result.Data);
 });
 
-// POST /{id}/cancel (Cancelar Pedido)
+// POST /{id}/cancel (Cancelar Pedido - Usuario)
 api.MapPost("/{id:int}/cancel", async (int id, OrderService service, ClaimsPrincipal user) =>
 {
     var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
     if (userId == null) return Results.Unauthorized();
 
-    // Ya no necesitamos pasar el email, el servicio lo lee de la BD
     var result = await service.CancelOrderAsync(id, userId);
 
     if (!result.Succeeded) return Results.BadRequest(result.Errors);
@@ -131,9 +132,10 @@ api.MapPost("/{id:int}/cancel", async (int id, OrderService service, ClaimsPrinc
     return Results.Ok(new { Message = "Pedido cancelado correctamente" });
 });
 
-// GET /admin (Ver Todo - Solo Admin)
-var adminApi = api.MapGroup("/admin");
+// --- ADMIN ENDPOINTS ---
+var adminApi = api.MapGroup("/admin"); // Esto ya añade /api/v1/orders/admin
 
+// GET /admin (Ver Todo)
 adminApi.MapGet("/", async (OrderService service, ClaimsPrincipal user) =>
 {
     if (!user.IsInRole("Admin")) return Results.Forbid();
@@ -145,7 +147,6 @@ adminApi.MapGet("/", async (OrderService service, ClaimsPrincipal user) =>
 // POST /admin/{id}/ship (Enviar pedido)
 adminApi.MapPost("/{id:int}/ship", async (int id, OrderService service, ClaimsPrincipal user) =>
 {
-    // Verificamos rol de admin
     if (!user.IsInRole("Admin")) return Results.Forbid();
 
     var result = await service.ShipOrderAsync(id);
@@ -154,6 +155,20 @@ adminApi.MapPost("/{id:int}/ship", async (int id, OrderService service, ClaimsPr
         return Results.BadRequest(new { Error = result.Errors });
 
     return Results.Ok(new { Message = "Pedido marcado como enviado" });
+});
+
+// POST /admin/{id}/cancel (Cancelar Admin) - ¡AQUÍ ESTABA EL ERROR!
+adminApi.MapPost("/{id:int}/cancel", async (int id, OrderService service, ClaimsPrincipal user) =>
+{
+    if (!user.IsInRole("Admin")) return Results.Forbid();
+
+    // Asegúrate de que OrderService.cs tenga este método
+    var result = await service.CancelOrderAdminAsync(id);
+
+    if (!result.Succeeded)
+        return Results.BadRequest(new { Error = result.Errors });
+
+    return Results.Ok(new { Message = "Pedido cancelado por admin" });
 });
 
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));

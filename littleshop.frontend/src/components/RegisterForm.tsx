@@ -1,13 +1,16 @@
 ﻿import { useState } from "react";
 import type { FormEvent } from "react";
-
-const IDENTITY_API_BASE_URL = import.meta.env.VITE_IDENTITY_API_URL;
+import { registerUser } from "../assets/api";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterForm() {
     const [regEmail, setRegEmail] = useState('');
     const [regPassword, setRegPassword] = useState('');
     const [regMessage, setRegMessage] = useState('');
     const [regLoading, setRegLoading] = useState(false);
+
+    // 1. Inicializamos el hook
+    const navigate = useNavigate();
 
     const passwordValidations = [
         { label: 'Mínimo 8 caracteres', test: (pwd: string) => pwd.length >= 8 },
@@ -23,31 +26,21 @@ export default function RegisterForm() {
         setRegLoading(true);
 
         try {
-            const response = await fetch(`${IDENTITY_API_BASE_URL}/api/account/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: regEmail, password: regPassword }),
-            });
+            await registerUser({ email: regEmail, password: regPassword });
 
             setRegLoading(false);
+            setRegMessage('¡Registro exitoso! Redirigiendo al login...');
+            setRegEmail('');
+            setRegPassword('');
 
-            if (response.ok) {
-                setRegMessage('¡Registro exitoso!');
-                setRegEmail('');
-                setRegPassword('');
-            } else {
-                const errorData = await response.json();
-                let errorMessage = 'Error desconocido.';
-                if (Array.isArray(errorData)) {
-                    errorMessage = errorData.map((err: { description: string }) => err.description).join('; ');
-                } else if (errorData.message) {
-                    errorMessage = errorData.message;
-                }
-                setRegMessage(errorMessage);
-            }
-        } catch {
+            // 2. Redirigimos al Login tras 2 segundos
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
+
+        } catch (error) {
             setRegLoading(false);
-            setRegMessage('Error de conexión con el servicio de identidad.');
+            setRegMessage((error as Error).message || 'Error de conexión.');
         }
     };
 

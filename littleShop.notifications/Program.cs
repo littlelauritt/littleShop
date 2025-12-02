@@ -16,8 +16,12 @@ builder.Services.AddMassTransit(x =>
     // 2. Nuevo Pedido
     x.AddConsumer<OrderCreatedConsumer>();
 
-    // 3. Cancelar Pedido (¡ESTE ES EL QUE NECESITAS!)
+    // 3. Cancelar Pedido
     x.AddConsumer<OrderCancelledConsumer>();
+
+    // 4. ENVÍO DE PEDIDO (¡FALTABA ESTA LÍNEA!)
+    // Sin esto, el evento OrderShippedEvent se ignora.
+    x.AddConsumer<OrderShippedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {

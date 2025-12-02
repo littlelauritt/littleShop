@@ -1,60 +1,73 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { authenticatedFetch } from '../../assets/api';
-import { Alert, Spinner, Table, Button } from 'react-bootstrap';
+import { Alert, Spinner, Table, Button, Badge } from 'react-bootstrap';
 
+// Definimos la interfaz basándonos en lo que devuelve tu AdminUsersController
 interface User {
     id: string;
     email: string;
-    isLocked: boolean;
+    isLocked: boolean; // Tu controlador devuelve "isLocked"
 }
 
 export default function AdminUserManagement() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [msg, setMsg] = useState<string | null>(null);
+    const [msg, setMsg] = useState<{ text: string, type: 'success' | 'danger' } | null>(null);
 
-    // Función para cargar usuarios
+    // 1. CARGAR USUARIOS
     const fetchUsers = async () => {
         setLoading(true);
         try {
             const data = await authenticatedFetch<User[]>('/api/admin/users', 'GET');
-            setUsers(data);
-        } catch (err: unknown) { // ⬅️ CORRECCIÓN: Usar unknown
-            const message = err instanceof Error ? err.message : 'Error desconocido al cargar usuarios.';
-            setError(message);
+            // Ordenamos por email para que sea más fácil buscar
+            setUsers(data.sort((a, b) => a.email.localeCompare(b.email)));
+        } catch (err) {
+            setMsg({ text: 'Error al cargar usuarios. ¿Eres Admin?', type: 'danger' });
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
-    // Función para Bloquear/Desbloquear
+    // 2. BLOQUEAR / DESBLOQUEAR
     const toggleLock = async (userId: string, isLocked: boolean) => {
         try {
+            // Tu API espera /lock o /unlock
             const action = isLocked ? 'unlock' : 'lock';
             await authenticatedFetch(`/api/admin/users/${userId}/${action}`, 'POST');
-            setMsg(`Usuario ${isLocked ? 'desbloqueado' : 'bloqueado'} correctamente.`);
-            fetchUsers(); // Recargar la lista
-        } catch (err: unknown) { // ⬅️ CORRECCIÓN: Usar unknown
-            const message = err instanceof Error ? err.message : 'Error al cambiar estado.';
-            setError(message);
+
+            setMsg({ text: `Usuario ${isLocked ? 'desbloqueado' : 'bloqueado'} con éxito.`, type: 'success' });
+            fetchUsers(); // Recargamos la lista
+        } catch {
+            setMsg({ text: 'Error al cambiar el estado del usuario.', type: 'danger' });
         }
     };
 
-    // Cargar al inicio
+    // 3. ELIMINAR USUARIO
+    const deleteUser = async (userId: string) => {
+        if (!confirm('⚠️ ¿Estás SEGURO de eliminar este usuario? Esta acción es irreversible.')) return;
+
+        try {
+            await authenticatedFetch(`/api/admin/users/${userId}`, 'DELETE');
+            setMsg({ text: 'Usuario eliminado correctamente.', type: 'success' });
+            fetchUsers();
+        } catch {
+            setMsg({ text: 'Error al eliminar usuario.', type: 'danger' });
+        }
+    };
+
     useEffect(() => {
         fetchUsers();
     }, []);
 
-    if (loading) return <Spinner animation="border" />;
+    if (loading) return <div className="text-center p-4"><Spinner animation="border" /></div>;
 
     return (
         <div>
-            <h4>Gestión de Usuarios</h4>
-            {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
-            {msg && <Alert variant="success" onClose={() => setMsg(null)} dismissible>{msg}</Alert>}
+            <h4 className="mb-3">Gestión de Usuarios</h4>
+            {msg && <Alert variant={msg.type} onClose={() => setMsg(null)} dismissible>{msg.text}</Alert>}
 
-            <Table striped bordered hover>
+            <Table striped bordered hover responsive>
                 <thead>
                     <tr>
                         <th>Email</th>
@@ -68,18 +81,28 @@ export default function AdminUserManagement() {
                             <td>{user.email}</td>
                             <td>
                                 {user.isLocked ?
-                                    <span className="badge bg-danger">Bloqueado</span> :
-                                    <span className="badge bg-success">Activo</span>
+                                    <Badge bg="danger">Bloqueado</Badge> :
+                                    <Badge bg="success">Activo</Badge>
                                 }
                             </td>
                             <td>
-                                <Button
-                                    size="sm"
-                                    variant={user.isLocked ? "success" : "warning"}
-                                    onClick={() => toggleLock(user.id, user.isLocked)}
-                                >
-                                    {user.isLocked ? "Desbloquear" : "Bloquear"}
-                                </Button>
+                                <div className="d-flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant={user.isLocked ? "success" : "warning"}
+                                        onClick={() => toggleLock(user.id, user.isLocked)}
+                                    >
+                                        {user.isLocked ? "Desbloquear" : "Bloquear"}
+                                    </Button>
+
+                                    <Button
+                                        size="sm"
+                                        variant="danger"
+                                        onClick={() => deleteUser(user.id)}
+                                    >
+                                        Eliminar
+                                    </Button>
+                                </div>
                             </td>
                         </tr>
                     ))}

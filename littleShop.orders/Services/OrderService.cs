@@ -39,7 +39,7 @@ public class OrderService(
             UserId = userId,
             CreatedAt = DateTime.UtcNow,
             Status = OrderStatus.Confirmed,
-            CustomerEmail = userEmail, // <--- GUARDAMOS EMAIL REAL
+            CustomerEmail = userEmail, // Guardamos el email
             Items = request.Items.Select(i => new OrderItem
             {
                 ProductId = i.ProductId,
@@ -81,17 +81,35 @@ public class OrderService(
     {
         var order = await db.Orders.FindAsync(orderId);
         if (order is null) return ServiceResult.Failure("Pedido no encontrado");
-        if (order.Status != OrderStatus.Confirmed) return ServiceResult.Failure("Solo se envían pedidos confirmados");
+
+        // Permitimos enviar si está Confirmed o Pending
+        if (order.Status != OrderStatus.Confirmed && order.Status != OrderStatus.Pending)
+            return ServiceResult.Failure("Solo se envían pedidos confirmados o pendientes");
 
         order.Status = OrderStatus.Shipped;
         await db.SaveChangesAsync();
 
-        // Evento de Envío (Fire & Forget)
-        // (Opcional: si quieres implementar OrderShippedEvent)
+        // Enviar evento de envío (ESTO DISPARA EL EMAIL)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await publishEndpoint.Publish(new OrderShippedEvent(
+                    order.Id,
+                    order.CustomerEmail ?? "sin-email@littleshop.local",
+                    "ENVIO-12345" // Simulación de tracking
+                ));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Error publicando evento de envío: {ex.Message}");
+            }
+        });
+
         return ServiceResult.Success();
     }
 
-    // 3. CANCELAR PEDIDO
+    // 3. CANCELAR PEDIDO (Usuario normal - Chequea UserId)
     public async Task<ServiceResult> CancelOrderAsync(int orderId, string userId)
     {
         var order = await db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
@@ -108,7 +126,6 @@ public class OrderService(
         {
             try
             {
-                // Usamos order.CustomerEmail que guardamos al crear el pedido
                 await publishEndpoint.Publish(new OrderCancelledEvent(
                     order.Id,
                     order.CustomerEmail,
@@ -124,7 +141,39 @@ public class OrderService(
         return ServiceResult.Success();
     }
 
-    // 4. GET MIS PEDIDOS
+    // 4. CANCELAR PEDIDO (Admin) - ¡NO BORRAR! NECESARIO PARA EL PANEL ADMIN
+    public async Task<ServiceResult> CancelOrderAdminAsync(int orderId)
+    {
+        var order = await db.Orders.FindAsync(orderId);
+
+        if (order is null) return ServiceResult.Failure("Pedido no encontrado");
+        if (order.Status == OrderStatus.Cancelled) return ServiceResult.Failure("El pedido ya estaba cancelado");
+
+        // AQUÍ NO VERIFICAMOS EL USERID
+        order.Status = OrderStatus.Cancelled;
+        await db.SaveChangesAsync();
+
+        // Evento de cancelación
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await publishEndpoint.Publish(new OrderCancelledEvent(
+                    order.Id,
+                    order.CustomerEmail,
+                    "Cancelado por el Administrador"
+                ));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Error publicando evento de cancelación admin: {ex.Message}");
+            }
+        });
+
+        return ServiceResult.Success();
+    }
+
+    // 5. GET MIS PEDIDOS
     public async Task<ServiceResult<IEnumerable<OrderResponse>>> GetMyOrdersAsync(string userId)
     {
         var orders = await db.Orders
@@ -136,7 +185,7 @@ public class OrderService(
         return ServiceResult<IEnumerable<OrderResponse>>.Success(orders.Select(MapToResponse));
     }
 
-    // 5. GET TODOS (ADMIN)
+    // 6. GET TODOS (ADMIN)
     public async Task<ServiceResult<IEnumerable<OrderResponse>>> GetAllOrdersAdminAsync()
     {
         var orders = await db.Orders
@@ -151,13 +200,12 @@ public class OrderService(
     {
         var items = order.Items.Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.Quantity, i.UnitPrice)).ToList();
 
-        // Añado order.Status.ToString() para que salga "Pending", "Confirmed", etc.
         return new OrderResponse(
             order.Id,
             order.UserId,
             order.CreatedAt,
             order.TotalAmount,
-            order.Status.ToString(), // <--- AÑADE ESTO
+            order.Status.ToString(),
             items
         );
     }
