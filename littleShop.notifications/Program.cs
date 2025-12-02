@@ -1,7 +1,8 @@
 using littleshop.serviceDefaults;
-using littleShop.notifications.Consumers; // Tu carpeta de consumidores
-using MassTransit;
+using littleShop.notifications.Consumers;
 using littleShop.notifications.Services;
+using MassTransit;
+
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.AddServiceDefaults();
@@ -9,30 +10,22 @@ builder.Services.AddTransient<IEmailService, EmailService>();
 
 builder.Services.AddMassTransit(x =>
 {
-    // 1. Registramos tu consumidor
+    // 1. Registro Usuario
     x.AddConsumer<UserCreatedConsumer>();
+
+    // 2. Nuevo Pedido
+    x.AddConsumer<OrderCreatedConsumer>();
+
+    // 3. Cancelar Pedido (¡ESTE ES EL QUE NECESITAS!)
+    x.AddConsumer<OrderCancelledConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        // 2. LÓGICA DEL PROFESOR (Adaptada a ti)
-        var configuration = context.GetRequiredService<IConfiguration>();
+        var config = context.GetRequiredService<IConfiguration>();
+        var conn = config.GetConnectionString("messaging");
+        if (!string.IsNullOrEmpty(conn)) cfg.Host(new Uri(conn));
 
-        // ¡IMPORTANTE! Usamos "messaging" porque así lo llamaste en el AppHost
-        var connectionString = configuration.GetConnectionString("messaging");
-
-        if (!string.IsNullOrEmpty(connectionString))
-        {
-            // Esto coge la URL completa (amqp://guest:guest@messaging:5672...)
-            cfg.Host(new Uri(connectionString));
-        }
-
-        // 3. Política de reintentos (Muy útil si Rabbit tarda en arrancar)
-        cfg.UseMessageRetry(r => r.Intervals(
-            TimeSpan.FromSeconds(1),
-            TimeSpan.FromSeconds(5),
-            TimeSpan.FromSeconds(15)));
-
-        // 4. Configura las colas automáticamente
+        cfg.UseMessageRetry(r => r.Intervals(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5)));
         cfg.ConfigureEndpoints(context);
     });
 });

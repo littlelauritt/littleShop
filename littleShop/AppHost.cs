@@ -49,6 +49,10 @@ var catalogService = builder.AddProject<Projects.littleShop_catalog>("littleshop
 var ordersService = builder.AddProject<Projects.littleShop_orders>("littleshop-orders")
     .WithReference(ordersDb)
     .WaitFor(ordersDb)
+    .WithReference(catalogService)
+    .WaitFor(catalogService)
+    .WithReference(rabbit)
+    .WaitFor(rabbit)
     .WithHttpEndpoint(name: "orders-http");
 
 // --- 7. NOTIFICATIONS WORKER (¡CORREGIDO!) ---

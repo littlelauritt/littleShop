@@ -55,5 +55,27 @@ api.MapPost("/", async (CreateProductRequest request, ProductService service) =>
         ? Results.Created($"/api/v1/products/{result.Data!.Id}", result.Data)
         : Results.BadRequest(result.Errors);
 });
+
+// POST /api/v1/products/{id}/reduce-stock
+// Este endpoint lo llamará el microservicio de Orders
+api.MapPost("/{id:int}/reduce-stock", async (int id, UpdateStockRequest request, ProductService service) =>
+{
+    var result = await service.ReduceStockAsync(id, request.Stock);
+    return result.Succeeded ? Results.Ok() : Results.BadRequest(result.Errors);
+});
+// PUT: Editar Producto
+api.MapPut("/{id:int}", async (int id, UpdateProductRequest request, ProductService service) =>
+{
+    var result = await service.UpdateAsync(id, request);
+    return result.Succeeded ? Results.Ok(result.Data) : Results.NotFound(result.Errors);
+});
+
+// DELETE: Borrar Producto
+api.MapDelete("/{id:int}", async (int id, ProductService service) =>
+{
+    var result = await service.DeleteAsync(id);
+    return result.Succeeded ? Results.NoContent() : Results.NotFound(result.Errors);
+});
+
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
 app.Run();
