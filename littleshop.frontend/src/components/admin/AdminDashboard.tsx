@@ -1,38 +1,34 @@
 ﻿import React from 'react';
 import { Container, Tabs, Tab } from 'react-bootstrap';
-// Importamos los componentes hijos
 import AdminUserManagement from './AdminUserManagement';
 import AdminRoleManagement from './AdminRoleManagement';
 import AdminOrderManagement from './AdminOrderManagement';
-import ProfileDashboard from '../user/ProfileDashboard';
+import AdminProductManagement from './AdminProductManagement';
 
 export default function AdminDashboard() {
     return (
         <Container className="mt-4">
             <h1>Panel de Administración ⚙️</h1>
 
-            {/* INICIO DE TABS: Debe envolver a TODOS los <Tab> */}
-            <Tabs defaultActiveKey="orders" id="admin-tabs" className="mb-3">
+            <Tabs defaultActiveKey="products" id="admin-tabs" className="mb-3">
 
-                <Tab eventKey="orders" title="Gestión de Pedidos">
+                <Tab eventKey="products" title="📦 Productos">
+                    <AdminProductManagement />
+                </Tab>
+
+                <Tab eventKey="orders" title="🛒 Pedidos">
                     <AdminOrderManagement />
                 </Tab>
 
-                <Tab eventKey="users" title="Gestión de Usuarios">
+                <Tab eventKey="users" title="👥 Usuarios">
                     <AdminUserManagement />
                 </Tab>
 
-                <Tab eventKey="roles" title="Gestión de Roles">
+                <Tab eventKey="roles" title="🛡️ Roles">
                     <AdminRoleManagement />
                 </Tab>
 
-                <Tab eventKey="profile" title="Mi Perfil Admin">
-                    <ProfileDashboard />
-                </Tab>
-
             </Tabs>
-            {/* FIN DE TABS: Asegúrate de que esta etiqueta de cierre esté aquí */}
-
         </Container>
     );
 }

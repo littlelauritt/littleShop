@@ -13,18 +13,11 @@ public class EmailService : IEmailService
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _logger = logger;
-
         var connectionString = configuration["SMTP_HOST"];
-        _logger.LogInformation($"🔧 [DEBUG SMTP] Cadena recibida: '{connectionString}'");
 
         try
         {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                // Fallback por defecto si Aspire no inyecta nada
-                _smtpHost = "localhost";
-                _smtpPort = 1025;
-            }
+            if (string.IsNullOrEmpty(connectionString)) { _smtpHost = "localhost"; _smtpPort = 1025; }
             else
             {
                 if (!connectionString.Contains("://")) connectionString = $"tcp://{connectionString}";
@@ -33,57 +26,71 @@ public class EmailService : IEmailService
                 _smtpPort = uri.Port > 0 ? uri.Port : 1025;
             }
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError($"❌ Error parseando URL. Usando localhost:1025. Error: {ex.Message}");
-            _smtpHost = "localhost";
-            _smtpPort = 1025;
+            _smtpHost = "localhost"; _smtpPort = 1025;
         }
-
-        _logger.LogInformation($"✅ [CONFIG FINAL] Host: {_smtpHost}, Puerto: {_smtpPort}");
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string bodyHtml)
     {
-        // 1. PROTECCIÓN: Si el email está vacío o es nulo (pedidos viejos), no hacemos nada.
-        if (string.IsNullOrWhiteSpace(toEmail) || !toEmail.Contains("@"))
-        {
-            _logger.LogWarning($"⚠️ Email omitido: La dirección de correo '{toEmail}' no es válida.");
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(toEmail) || !toEmail.Contains("@")) return;
 
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("LittleShop", "noreply@littleshop.local"));
         message.To.Add(new MailboxAddress("", toEmail));
         message.Subject = subject;
 
-        var bodyBuilder = new BodyBuilder { HtmlBody = bodyHtml };
+        // Envolvemos el contenido en una plantilla bonita
+        var finalBody = GetEmailTemplate(subject, bodyHtml);
+
+        var bodyBuilder = new BodyBuilder { HtmlBody = finalBody };
         message.Body = bodyBuilder.ToMessageBody();
 
         try
         {
             using var client = new SmtpClient();
-
-            // INTENTO DE SOLUCIÓN AL ERROR DE PROTOCOLO:
-            // A veces 'None' falla si el servidor espera un saludo específico.
-            // 'Auto' suele ser más compatible. Si falla, prueba a volver a 'None'.
-            await client.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.Auto);
-
+            await client.ConnectAsync(_smtpHost, _smtpPort, SecureSocketOptions.None);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
-
             _logger.LogInformation($"✅ Email enviado a {toEmail}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"❌ Fallo crítico enviando email a {toEmail}");
-            // No hacemos 'throw' aquí para no bloquear el consumidor si el email falla
+            _logger.LogError(ex, $"❌ Fallo al enviar email a {toEmail}");
         }
     }
 
     public async Task SendWelcomeEmailAsync(string toEmail, string userId)
     {
-        var htmlContent = $@"<h1>¡Bienvenido!</h1><p>ID Cliente: {userId}</p>";
-        await SendEmailAsync(toEmail, "¡Bienvenido a LittleShop!", htmlContent);
+        // YA NO MOSTRAMOS EL ID, solo un mensaje amable.
+        var content = @"
+            <p>Estamos encantados de tenerte con nosotros.</p>
+            <p>Ya puedes acceder a tu cuenta y empezar a llenar tu carrito con los mejores productos tecnológicos.</p>
+            <div style='text-align: center; margin: 30px 0;'>
+            </div>";
+
+        await SendEmailAsync(toEmail, "¡Bienvenido a LittleShop! 🎉", content);
+    }
+
+    // Plantilla base para todos los correos
+    private string GetEmailTemplate(string title, string content)
+    {
+        return $@"
+        <div style='font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 40px 0;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+                <div style='background-color: #111827; padding: 20px; text-align: center;'>
+                    <h1 style='color: #ffffff; margin: 0; font-size: 24px;'>LittleShop 🛍️</h1>
+                </div>
+                <div style='padding: 30px; color: #374151; line-height: 1.6;'>
+                    <h2 style='color: #111827; margin-top: 0;'>{title}</h2>
+                    {content}
+                    <p style='margin-top: 30px; font-size: 0.9em; color: #6b7280;'>Atentamente,<br>El equipo de LittleShop</p>
+                </div>
+                <div style='background-color: #f9fafb; padding: 15px; text-align: center; font-size: 0.8em; color: #9ca3af;'>
+                    &copy; {DateTime.Now.Year} LittleShop. Todos los derechos reservados.
+                </div>
+            </div>
+        </div>";
     }
 }

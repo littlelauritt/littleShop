@@ -1,31 +1,40 @@
-﻿import React from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Container, Tabs, Tab } from 'react-bootstrap';
-// Importamos los componentes hijos
 import ProfileInfo from './ProfileInfo';
 import ChangePassword from './ChangePassword';
 import MyOrders from './MyOrders';
+import { getUserRole } from '../../assets/utils/auth';
 
 export default function ProfileDashboard() {
+    const [role, setRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        setRole(getUserRole());
+    }, []);
+
+    const defaultTab = role === 'Admin' ? 'info' : 'orders';
+    const tabsKey = role || 'loading';
+
     return (
         <Container className="mt-4">
-            <h1>Mi Perfil 👤</h1>
-            {/* IMPORTANTE: <Tabs> debe envolver a todos los <Tab> */}
-            <Tabs defaultActiveKey="orders" id="profile-tabs" className="mb-3">
+            <div className="d-flex align-items-center gap-2 mb-3">
+                <h1 className="mb-0">Gestión de Cuenta</h1>
+                {role === 'Admin' && <span className="badge bg-warning text-dark">Modo Admin</span>}
+            </div>
 
-                <Tab eventKey="orders" title="Mis Pedidos">
-                    <MyOrders />
-                </Tab>
-
-                <Tab eventKey="info" title="Información General">
+            <Tabs defaultActiveKey={defaultTab} id={`profile-tabs-${tabsKey}`} className="mb-3">
+                {role !== 'Admin' && (
+                    <Tab eventKey="orders" title="📦 Mis Pedidos">
+                        <MyOrders />
+                    </Tab>
+                )}
+                <Tab eventKey="info" title="👤 Datos Personales">
                     <ProfileInfo />
                 </Tab>
-
-                <Tab eventKey="password" title="Cambiar Contraseña">
+                <Tab eventKey="password" title="🔒 Seguridad">
                     <ChangePassword />
                 </Tab>
-
             </Tabs>
-            {/* Fin de Tabs. Si esto falta, da el error que te ha salido */}
         </Container>
     );
 }

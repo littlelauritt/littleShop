@@ -14,10 +14,12 @@
 		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+		<PackageReference Include="MassTransit.RabbitMQ" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\littleShop.serviceDefaults\littleShop.serviceDefaults.csproj" />
+		<ProjectReference Include="..\littleShop.Shared\littleShop.Shared.csproj" />
 	</ItemGroup>
 
 </Project>

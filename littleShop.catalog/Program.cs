@@ -1,42 +1,70 @@
-using littleshop.serviceDefaults;
+Ôªøusing littleshop.serviceDefaults;
 using littleShop.catalog.Data;
 using littleShop.catalog.DTOs;
 using littleShop.catalog.Services;
+using littleShop.catalog.Consumers;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// 1. CONEXI”N A BASE DE DATOS (Postgres)
+// 1. CONEXI√ìN A BASE DE DATOS (Postgres)
 builder.AddNpgsqlDbContext<CatalogDbContext>("catalogdb");
 
 // 2. SERVICIOS
 builder.Services.AddScoped<ProductService>();
 
-// 3. OPENAPI (SCALAR)
+// 3. CONFIGURACI√ìN MASSTRANSIT
+builder.Services.AddMassTransit(x =>
+{
+    x.SetKebabCaseEndpointNameFormatter();
+
+    // Registramos el consumidor que creamos
+    x.AddConsumer<OrderCancelledConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        var configuration = context.GetRequiredService<IConfiguration>();
+        var connectionString = configuration.GetConnectionString("messaging");
+
+        Console.WriteLine($"üîç [DEBUG RABBIT] ConnectionString recibida: '{connectionString ?? "NULA"}'");
+
+        if (!string.IsNullOrEmpty(connectionString)) cfg.Host(new Uri(connectionString));
+        else cfg.Host("messaging", "/");
+
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+// 4. OPENAPI (SCALAR)
+// Estas l√≠neas deben ir SIEMPRE antes del Build()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
+// =========================================================
+// AQU√ç SE CONSTRUYE LA APP (SE CIERRA EL REGISTRO DE SERVICIOS)
+// =========================================================
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// 4. MIGRACIONES AUTOM¡TICAS (Crea tablas al arrancar)
+// 5. MIGRACIONES AUTOM√ÅTICAS Y MIDDLEWARES
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(); // DocumentaciÛn en /scalar/v1
+    app.MapScalarApiReference(); // Documentaci√≥n en /scalar/v1
 
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-    await db.Database.MigrateAsync(); // Esto crea la tabla Products en Postgres
+    await db.Database.MigrateAsync();
 }
 
-// ==================================================================
-// 5. DEFINICI”N DE ENDPOINTS (MINIMAL API)
-// ==================================================================
+// =========================================================
+// DEFINICI√ìN DE ENDPOINTS
+// =========================================================
 
 var api = app.MapGroup("/api/v1/products").WithTags("Products");
 
@@ -57,12 +85,12 @@ api.MapPost("/", async (CreateProductRequest request, ProductService service) =>
 });
 
 // POST /api/v1/products/{id}/reduce-stock
-// Este endpoint lo llamar· el microservicio de Orders
 api.MapPost("/{id:int}/reduce-stock", async (int id, UpdateStockRequest request, ProductService service) =>
 {
     var result = await service.ReduceStockAsync(id, request.Stock);
     return result.Succeeded ? Results.Ok() : Results.BadRequest(result.Errors);
 });
+
 // PUT: Editar Producto
 api.MapPut("/{id:int}", async (int id, UpdateProductRequest request, ProductService service) =>
 {
@@ -78,4 +106,5 @@ api.MapDelete("/{id:int}", async (int id, ProductService service) =>
 });
 
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
+
 app.Run();

@@ -67,9 +67,8 @@ public class OrderService(
                     order.CreatedAt
                 ));
             }
-            catch (Exception ex)
+            catch 
             {
-                Console.WriteLine($"⚠️ Error publicando evento de pedido: {ex.Message}");
             }
         });
 
@@ -100,9 +99,8 @@ public class OrderService(
                     "ENVIO-12345" // Simulación de tracking
                 ));
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"⚠️ Error publicando evento de envío: {ex.Message}");
             }
         });
 
@@ -112,16 +110,20 @@ public class OrderService(
     // 3. CANCELAR PEDIDO (Usuario normal - Chequea UserId)
     public async Task<ServiceResult> CancelOrderAsync(int orderId, string userId)
     {
-        var order = await db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        var order = await db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
 
         if (order is null) return ServiceResult.Failure("Pedido no encontrado");
-        if (order.UserId != userId) return ServiceResult.Failure("No tienes permiso para cancelar este pedido");
-        if (order.Status == OrderStatus.Cancelled) return ServiceResult.Failure("El pedido ya estaba cancelado");
+        if (order.UserId != userId) return ServiceResult.Failure("No tienes permiso");
+        if (order.Status == OrderStatus.Cancelled) return ServiceResult.Failure("Ya estaba cancelado");
 
         order.Status = OrderStatus.Cancelled;
         await db.SaveChangesAsync();
 
-        // Evento de cancelación
+        // Preparamos el diccionario {IdProducto: Cantidad}
+        var itemsToRestore = order.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
+        
         _ = Task.Run(async () =>
         {
             try
@@ -129,45 +131,42 @@ public class OrderService(
                 await publishEndpoint.Publish(new OrderCancelledEvent(
                     order.Id,
                     order.CustomerEmail,
-                    "Cancelado por el usuario"
+                    "Cancelado por el Administrador",
+                    itemsToRestore
                 ));
             }
-            catch (Exception ex)
+            catch 
             {
-                Console.WriteLine($"⚠️ Error publicando evento de cancelación: {ex.Message}");
             }
         });
 
         return ServiceResult.Success();
     }
 
-    // 4. CANCELAR PEDIDO (Admin) - ¡NO BORRAR! NECESARIO PARA EL PANEL ADMIN
+    // 4. CANCELAR PEDIDO (Admin)
     public async Task<ServiceResult> CancelOrderAdminAsync(int orderId)
     {
-        var order = await db.Orders.FindAsync(orderId);
+        // CAMBIO: Añadimos .Include(o => o.Items)
+        var order = await db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
 
         if (order is null) return ServiceResult.Failure("Pedido no encontrado");
-        if (order.Status == OrderStatus.Cancelled) return ServiceResult.Failure("El pedido ya estaba cancelado");
+        if (order.Status == OrderStatus.Cancelled) return ServiceResult.Failure("Ya estaba cancelado");
 
-        // AQUÍ NO VERIFICAMOS EL USERID
         order.Status = OrderStatus.Cancelled;
         await db.SaveChangesAsync();
 
-        // Evento de cancelación
+        var itemsToRestore = order.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
+
         _ = Task.Run(async () =>
         {
-            try
-            {
-                await publishEndpoint.Publish(new OrderCancelledEvent(
-                    order.Id,
-                    order.CustomerEmail,
-                    "Cancelado por el Administrador"
-                ));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ Error publicando evento de cancelación admin: {ex.Message}");
-            }
+            await publishEndpoint.Publish(new OrderCancelledEvent(
+                order.Id,
+                order.CustomerEmail,
+                "Cancelado por el Admin",
+                itemsToRestore // <--- Pasamos la lista
+            ));
         });
 
         return ServiceResult.Success();

@@ -4,23 +4,24 @@ using littleShop.notifications.Services;
 
 namespace littleShop.notifications.Consumers;
 
-public class OrderShippedConsumer : IConsumer<OrderShippedEvent>
+public class OrderShippedConsumer(IEmailService emailService, ILogger<OrderShippedConsumer> logger)
+    : IConsumer<OrderShippedEvent>
 {
-    private readonly ILogger<OrderShippedConsumer> _logger;
-    private readonly IEmailService _emailService;
-
-    public OrderShippedConsumer(ILogger<OrderShippedConsumer> logger, IEmailService emailService)
-    {
-        _logger = logger;
-        _emailService = emailService;
-    }
-
     public async Task Consume(ConsumeContext<OrderShippedEvent> context)
     {
         var msg = context.Message;
-        _logger.LogInformation("🚚 [WORKER] Pedido #{Id} ENVIADO. Tracking: {Tracking}", msg.OrderId, msg.TrackingNumber);
+        logger.LogInformation("🚚 Pedido enviado #{Id}", msg.OrderId);
 
-        await _emailService.SendWelcomeEmailAsync(msg.Email,
-            $"<h1>¡Tu pedido ha salido! 🚚</h1><p>El pedido #{msg.OrderId} está en camino.</p><p>Número de seguimiento: <b>{msg.TrackingNumber}</b></p>");
+        var subject = $"¡Tu pedido #{msg.OrderId} está en camino! 🚚";
+
+        var body = $@"
+            <h3 style='color: #198754;'>¡Buenas noticias!</h3>
+            <p>Tu pedido <strong>#{msg.OrderId}</strong> acaba de salir de nuestros almacenes.</p>
+            <p>Número de seguimiento: <strong>{msg.TrackingNumber}</strong></p>
+            <br>
+            <p>¡Esperamos que lo disfrutes!</p>
+        ";
+
+        await emailService.SendEmailAsync(msg.Email, subject, body);
     }
 }

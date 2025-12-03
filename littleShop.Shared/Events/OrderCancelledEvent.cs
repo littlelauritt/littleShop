@@ -3,5 +3,6 @@
 public record OrderCancelledEvent(
     int OrderId,
     string Email,
-    string Reason
+    string Reason,
+    Dictionary<int, int> ItemsToRestore
 );

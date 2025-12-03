@@ -9,8 +9,9 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
     {
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("El email es obligatorio.")
-            .EmailAddress().WithMessage("El formato del email no es válido.");
-
+            .EmailAddress().WithMessage("El formato del email no es válido.")
+            .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$").WithMessage("El email debe contener un dominio válido (ej: .com, .es).");
+        
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("La contraseña es obligatoria.")
             .MinimumLength(6).WithMessage("La contraseña debe tener al menos 6 caracteres.")

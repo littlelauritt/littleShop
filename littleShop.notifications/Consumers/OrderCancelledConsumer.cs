@@ -4,23 +4,24 @@ using littleShop.notifications.Services;
 
 namespace littleShop.notifications.Consumers;
 
-public class OrderCancelledConsumer : IConsumer<OrderCancelledEvent>
+public class OrderCancelledConsumer(IEmailService emailService, ILogger<OrderCancelledConsumer> logger)
+    : IConsumer<OrderCancelledEvent>
 {
-    private readonly ILogger<OrderCancelledConsumer> _logger;
-    private readonly IEmailService _emailService;
-
-    public OrderCancelledConsumer(ILogger<OrderCancelledConsumer> logger, IEmailService emailService)
-    {
-        _logger = logger;
-        _emailService = emailService;
-    }
-
     public async Task Consume(ConsumeContext<OrderCancelledEvent> context)
     {
         var msg = context.Message;
-        _logger.LogWarning("🚫 [PEDIDO CANCELADO] ID: {Id}", msg.OrderId);
+        logger.LogInformation("❌ Pedido cancelado #{Id}. Motivo: {Reason}", msg.OrderId, msg.Reason);
 
-        await _emailService.SendWelcomeEmailAsync(msg.Email,
-            $"<h1 style='color:red'>Pedido #{msg.OrderId} Cancelado</h1><p>Motivo: {msg.Reason}</p>");
+        var subject = $"Pedido #{msg.OrderId} Cancelado";
+
+        var body = $@"
+            <h3 style='color: #dc3545;'>Tu pedido ha sido cancelado</h3>
+            <p>Lamentamos informarte que el pedido <strong>#{msg.OrderId}</strong> ha sido cancelado.</p>
+            <p><strong>Motivo:</strong> {msg.Reason}</p>
+            <br>
+            <p>Si ya habías pagado, recibirás el reembolso en los próximos días.</p>
+        ";
+
+        await emailService.SendEmailAsync(msg.Email, subject, body);
     }
 }

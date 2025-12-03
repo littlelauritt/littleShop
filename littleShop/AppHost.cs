@@ -43,6 +43,8 @@ var identityService = builder.AddProject<Projects.littleShop_identity>("littlesh
 var catalogService = builder.AddProject<Projects.littleShop_catalog>("littleshop-catalog")
     .WithReference(catalogDb)
     .WaitFor(catalogDb)
+    .WithReference(rabbit)
+    .WaitFor(rabbit)
     .WithHttpEndpoint(name: "catalog-http");
 
 // --- 6. Orders ---
