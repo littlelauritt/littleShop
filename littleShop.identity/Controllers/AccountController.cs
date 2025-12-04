@@ -35,12 +35,12 @@ namespace littleShop.identity.Controllers
             _registerValidator = registerValidator;
         }
 
-        // 1. REGISTRO (Modificado para Email Confirmation)
+        // 1. REGISTRO
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest model)
         {
-            // A. Validación de entrada (Formato email, password segura, etc.)
+            // A. Validación de entrada
             var validationResult = await _registerValidator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
@@ -65,11 +65,10 @@ namespace littleShop.identity.Controllers
             // --- D. GENERACIÓN DE TOKEN DE CONFIRMACIÓN ---
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            // Codificamos el token para que sea seguro ponerlo en una URL (evita problemas con caracteres especiales como '+')
+            // Codificamos el token para que sea seguro ponerlo en una URL (Base64Url)
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
             // --- E. PUBLICAR EVENTO CON EL TOKEN ---
-            // Enviamos el evento a RabbitMQ para que el servicio de notificaciones envíe el correo
             await _publishEndpoint.Publish(new UserCreatedEvent(
                 user.Id,
                 user.Email!,
@@ -79,7 +78,7 @@ namespace littleShop.identity.Controllers
             return Ok(new { Message = "Usuario registrado. Por favor, revisa tu email para confirmar la cuenta." });
         }
 
-        // 2. LOGIN (Modificado para bloquear no confirmados)
+        // 2. LOGIN
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
@@ -90,12 +89,10 @@ namespace littleShop.identity.Controllers
                 return Unauthorized(new { Message = "Usuario o contraseña incorrecta" });
 
             // --- F. VALIDACIÓN DE EMAIL CONFIRMADO ---
-            // Si el usuario existe pero no ha confirmado su email, no le dejamos entrar.
             if (!await _userManager.IsEmailConfirmedAsync(user))
             {
                 return Unauthorized(new { Message = "Debes confirmar tu email antes de iniciar sesión.", Code = "EMAIL_NOT_CONFIRMED" });
             }
-            // -------------------------------------
 
             var passwordValid = await _userManager.CheckPasswordAsync(user, model.Password);
             if (!passwordValid)
@@ -109,25 +106,39 @@ namespace littleShop.identity.Controllers
             return Ok(token);
         }
 
-        // 3. CONFIRMAR EMAIL (Nuevo Endpoint)
-        // Este endpoint es llamado por el Frontend cuando el usuario hace clic en el enlace del correo
+        // 3. CONFIRMAR EMAIL (MEJORADO / BLINDADO)
         [AllowAnonymous]
         [HttpPost("confirm-email")]
         public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
         {
+            if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.Code))
+                return BadRequest("Faltan datos (UserId o Code).");
+
             var user = await _userManager.FindByIdAsync(request.UserId);
             if (user == null) return NotFound("Usuario no encontrado.");
 
-            // Decodificamos el token que viene de la URL/Frontend
             string decodedToken;
             try
             {
+                // INTENTO 1: Formato Correcto (Base64Url)
+                // Esto funcionará para los usuarios nuevos y URLs limpias
                 var decodedBytes = WebEncoders.Base64UrlDecode(request.Code);
                 decodedToken = Encoding.UTF8.GetString(decodedBytes);
             }
             catch
             {
-                return BadRequest("Token inválido o corrupto.");
+                // INTENTO 2: Fallback para formato "Sucio" (Base64 Estándar)
+                // Si el token llegó corrupto (ej. espacios en lugar de +), intentamos arreglarlo.
+                try
+                {
+                    var dirtyCode = request.Code.Replace(" ", "+");
+                    var decodedBytes = Convert.FromBase64String(dirtyCode);
+                    decodedToken = Encoding.UTF8.GetString(decodedBytes);
+                }
+                catch
+                {
+                    return BadRequest("El token de verificación está corrupto y no se pudo leer.");
+                }
             }
 
             // Validamos el token con Identity

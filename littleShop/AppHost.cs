@@ -4,22 +4,22 @@ using System.IO;
 var builder = DistributedApplication.CreateBuilder(args);
 
 // --- 1. FRONTEND ---
-// Definimos el frontend primero para tener su referencia disponible
 var frontendPath = Path.Combine(builder.AppHostDirectory, "..", "littleshop.frontend");
 var frontendApp = builder.AddExecutable("littleshop-frontend", "npm", frontendPath, "run", "dev")
-    // CAMBIO CRÍTICO: Añadimos 'port: 5173' para FIJAR el puerto externo.
-    // Aspire reservará el 5173 y se lo pasará a Vite via la variable "PORT".
     .WithHttpEndpoint(env: "PORT", port: 5173, name: "frontend-http")
     .WithExternalHttpEndpoints();
 
 // --- 2. Infraestructura ---
+
+// VUELVE EL PUERTO 5432 (Como tú querías)
 var postgresContainer = builder.AddPostgres("postgres")
     .WithDataVolume("littleshop-postgres-data")
-    .WithHostPort(5432)
+    .WithHostPort(5432) // <--- Aquí está tu puerto fijo recuperado
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgAdmin(pg => pg.WithHostPort(5050));
 
-var littleShopDb = postgresContainer.AddDatabase("littleshop-db");
+// Base de datos para Identity (renombrada correctamente)
+var identityDb = postgresContainer.AddDatabase("identitydb");
 var catalogDb = postgresContainer.AddDatabase("catalogdb");
 var ordersDb = postgresContainer.AddDatabase("ordersdb");
 
@@ -39,11 +39,10 @@ var maildev = builder.AddContainer("maildev", "maildev/maildev")
 // --- 3. Servicios Backend ---
 
 var identityService = builder.AddProject<Projects.littleShop_identity>("littleshop-identity")
-    .WithReference(littleShopDb).WaitFor(littleShopDb)
+    .WithReference(identityDb).WaitFor(identityDb)
     .WithReference(rabbit).WaitFor(rabbit)
     .WithHttpEndpoint(name: "identity-http")
     .WithExternalHttpEndpoints()
-    // Pasamos la URL (que ahora será siempre localhost:5173)
     .WithEnvironment("FRONTEND_URL", frontendApp.GetEndpoint("frontend-http"));
 
 var catalogService = builder.AddProject<Projects.littleShop_catalog>("littleshop-catalog")
@@ -61,7 +60,6 @@ var ordersService = builder.AddProject<Projects.littleShop_orders>("littleshop-o
 builder.AddProject<Projects.littleShop_notifications>("littleshop-notifications")
     .WithReference(rabbit).WaitFor(rabbit)
     .WithEnvironment("SMTP_HOST", maildev.GetEndpoint("smtp"))
-    // Inyectamos la URL. Al haber fijado el puerto arriba, GetEndpoint devolverá http://localhost:5173
     .WithEnvironment("FRONTEND_URL", frontendApp.GetEndpoint("frontend-http"));
 
 // --- 5. Gateway ---
@@ -72,7 +70,7 @@ var apiGateway = builder.AddProject<Projects.littleshop_apiGateway>("littleshop-
     .WithReference(redis).WaitFor(redis)
     .WithHttpEndpoint(name: "gateway-http");
 
-// Configuración final del frontend para que sepa dónde está el Gateway
+// Configuración final del frontend
 frontendApp
     .WithEnvironment("VITE_GATEWAY_URL", apiGateway.GetEndpoint("gateway-http"))
     .WithReference(apiGateway)

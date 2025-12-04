@@ -12,8 +12,8 @@ using System.Reflection;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using littleshop.serviceDefaults;
-using FluentValidation; // <--- MIÉRCOLES
-using MassTransit;      // <--- JUEVES
+using FluentValidation;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,7 +54,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 // 3. BASE DE DATOS E IDENTITY
 // ---------------------------------------------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("littleshop-db")));
+    // CAMBIO IMPORTANTE: "identitydb" debe coincidir con el nombre en AppHost.cs
+    options.UseNpgsql(builder.Configuration.GetConnectionString("identitydb")));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
@@ -63,6 +64,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireDigit = true;
     options.Password.RequireNonAlphanumeric = true;
+    options.SignIn.RequireConfirmedEmail = true; // Aseguramos que sea necesario confirmar email
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
