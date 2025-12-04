@@ -1,17 +1,15 @@
 ﻿import { useState } from "react";
 import type { FormEvent } from "react";
 import { registerUser } from "../assets/api";
-import { useNavigate } from "react-router-dom";
+// Se ha eliminado useNavigate y react-router-dom porque no se usaban y daban error
 
 export default function RegisterForm() {
     const [regEmail, setRegEmail] = useState('');
     const [regPassword, setRegPassword] = useState('');
     const [regMessage, setRegMessage] = useState('');
     const [regLoading, setRegLoading] = useState(false);
-
-    // 1. Inicializamos el hook
-    const navigate = useNavigate();
-
+    
+    // Validaciones (sin cambios)
     const passwordValidations = [
         { label: 'Mínimo 8 caracteres', test: (pwd: string) => pwd.length >= 8 },
         { label: 'Al menos una mayúscula', test: (pwd: string) => /[A-Z]/.test(pwd) },
@@ -26,18 +24,14 @@ export default function RegisterForm() {
         setRegLoading(true);
 
         try {
+            // Llamada a tu API local
             await registerUser({ email: regEmail, password: regPassword });
 
             setRegLoading(false);
-            setRegMessage('¡Registro exitoso! Redirigiendo al login...');
+            setRegMessage('¡Cuenta creada! ✉️ Hemos enviado un email de confirmación. Debes validarlo para entrar.');
             setRegEmail('');
             setRegPassword('');
-
-            // 2. Redirigimos al Login tras 2 segundos
-            setTimeout(() => {
-                navigate('/login');
-            }, 2000);
-
+            
         } catch (error) {
             setRegLoading(false);
             setRegMessage((error as Error).message || 'Error de conexión.');
@@ -81,7 +75,7 @@ export default function RegisterForm() {
                 {regLoading ? 'Registrando...' : 'Registrar Cuenta'}
             </button>
             {regMessage && (
-                <div className={`alert mt-3 ${regMessage.includes('exitoso') ? 'alert-success' : 'alert-danger'}`} role="alert">
+                <div className={`alert mt-3 ${regMessage.includes('creada') ? 'alert-success' : 'alert-danger'}`} role="alert">
                     {regMessage}
                 </div>
             )}

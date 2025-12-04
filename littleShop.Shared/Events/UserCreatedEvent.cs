@@ -1,3 +1,8 @@
 ﻿namespace littleShop.Shared.Events;
 
-public record UserCreatedEvent(string UserId, string Email, DateTime CreatedAt);
+public record UserCreatedEvent(
+    string UserId,
+    string Email,
+    string ConfirmationToken,
+    DateTime CreatedAt
+);

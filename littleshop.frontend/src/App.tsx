@@ -8,6 +8,7 @@ import ProfileDashboard from './components/user/ProfileDashboard';
 import Home from './components/Home';
 import { Container } from 'react-bootstrap';
 import CartPage from './components/CartPage';
+import VerifyEmail from './components/VerifyEmail';
 
 function App() {
     const navigate = useNavigate();
@@ -21,6 +22,7 @@ function App() {
                     <Route path="/" element={<Home />} />
                     {/* NUEVA RUTA: CARRITO */}
                     <Route path="/cart" element={<CartPage />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
                     {/* LOGIN */}
                     <Route path="/login" element={
                         <div className="row justify-content-center">
