@@ -1,10 +1,8 @@
 ﻿import { getToken, logout } from "./utils/auth"
 
-// URL del Gateway (inyectada por Aspire o variable de entorno)
 const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 
 // --- TIPOS ---
-
 export interface LoginRequest {
     email: string;
     password: string;
@@ -25,23 +23,20 @@ export async function loginUser(data: LoginRequest): Promise<string> {
     });
 
     if (!response.ok) {
+        // CORRECCIÓN: Leemos texto primero para no perder el stream
+        const text = await response.text();
         let message = 'Credenciales incorrectas.';
         try {
-            const errorData = await response.json();
+            const errorData = JSON.parse(text);
             if (errorData.message) message = errorData.message;
             else if (errorData.title) message = errorData.title;
         } catch {
-             // Ignorar error de parseo
+            if (text) message = text;
         }
         throw new Error(message);
     }
 
     const authResponse = await response.json();
-
-    if (typeof authResponse.token !== 'string') {
-        throw new Error('Formato de respuesta de login inválido.');
-    }
-
     return authResponse.token;
 }
 
@@ -53,26 +48,24 @@ export async function registerUser(data: RegisterRequest): Promise<void> {
     });
 
     if (!response.ok) {
+        const text = await response.text();
         let message = 'Error en el registro.';
         try {
-            const errorData = await response.json();
+            const errorData = JSON.parse(text);
             message = errorData.message || errorData.title || message;
         } catch {
-             // Ignorar error de parseo
+            if (text) message = text;
         }
         throw new Error(message);
     }
 }
 
-// --- FUNCIÓN DE VERIFICACIÓN (Adaptada a tu AccountController.cs) ---
+// --- FUNCIÓN DE VERIFICACIÓN (ARREGLADA) ---
 export async function verifyUser(userId: string, code: string): Promise<void> {
     
-    // 1. La URL exacta según tu controlador: [HttpPost("confirm-email")]
     const url = `${GATEWAY_URL}/api/Account/confirm-email`;
-
     console.log(`🔗 Enviando POST a: ${url}`);
 
-    // 2. Enviamos POST con los datos en el BODY (porque usas [FromBody])
     const response = await fetch(url, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
@@ -80,20 +73,20 @@ export async function verifyUser(userId: string, code: string): Promise<void> {
     });
 
     if (!response.ok) {
+        // 1. Leemos el cuerpo como TEXTO primero (esto nunca falla)
+        const errorText = await response.text();
         let message = 'No se pudo verificar el correo.';
+        
         try {
-            const errorData = await response.json();
-            // Tu backend devuelve { Message: "..." } o string plano
-            message = errorData.Message || errorData.title || message;
+            // 2. Intentamos parsear a JSON si es posible
+            const errorJson = JSON.parse(errorText);
+            message = errorJson.Message || errorJson.title || message;
         } catch {
-             try {
-                const textError = await response.text();
-                if (textError) message = textError;
-             } catch {
-                // Comentario para evitar bloque vacío (ESLint)
-             }
+            // 3. Si no es JSON, usamos el texto crudo del servidor (aquí estará el error real)
+            if (errorText) message = errorText;
         }
-        console.error(`Error API (${response.status}): ${message}`);
+
+        console.error(`❌ Error API (${response.status}):`, message);
         throw new Error(message);
     }
 }
@@ -104,37 +97,30 @@ export async function authenticatedFetch<T>(
     body: object | null = null
 ): Promise<T> {
     const token = getToken();
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const config: RequestInit = {
-        method,
-        headers,
-    };
-
-    if (body) {
-        config.body = JSON.stringify(body);
-    }
+    const config: RequestInit = { method, headers };
+    if (body) config.body = JSON.stringify(body);
 
     const response = await fetch(`${GATEWAY_URL}${path}`, config);
 
     if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-            if (token) {
-                logout();
-                window.location.href = '/login';
-            }
+            if (token) { logout(); window.location.href = '/login'; }
             throw new Error(`Acceso denegado: ${response.status === 403 ? 'No tienes permiso.' : 'Token inválido.'}`);
         }
 
-        const errorData = await response.json().catch(() => ({ message: `Error ${response.status}: ${response.statusText}` }));
-        throw new Error(errorData.message || errorData.title || `Error ${response.status}`);
+        // CORRECCIÓN: Lectura segura del error
+        const text = await response.text();
+        let message = `Error ${response.status}`;
+        try {
+            const json = JSON.parse(text);
+            message = json.message || json.title || message;
+        } catch {
+            if (text) message = text;
+        }
+        throw new Error(message);
     }
 
     return response.status !== 204 ? (await response.json() as T) : {} as T;

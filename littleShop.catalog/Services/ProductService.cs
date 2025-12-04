@@ -8,12 +8,36 @@ namespace littleShop.catalog.Services;
 
 public class ProductService(CatalogDbContext db)
 {
-    public async Task<ServiceResult<IEnumerable<ProductResponse>>> GetAllAsync()
+    // CAMBIO IMPORTANTE: Ahora aceptamos parámetros de paginación
+    public async Task<ServiceResult<PagedResponse<ProductResponse>>> GetAllAsync(int page = 1, int pageSize = 10)
     {
+        // 1. Validaciones básicas para evitar errores
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 50) pageSize = 50; // Limitamos el máximo para proteger la BBDD
+
+        // 2. Contamos el total REAL en la base de datos (antes de paginar)
+        var totalCount = await db.Products.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        // 3. Obtenemos SOLO los productos de la página solicitada (SQL: OFFSET x LIMIT y)
         var products = await db.Products
+            .OrderBy(p => p.Id) // Importante ordenar siempre al paginar
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(p => new ProductResponse(p.Id, p.Name, p.Description, p.Price, p.Stock))
             .ToListAsync();
-        return ServiceResult<IEnumerable<ProductResponse>>.Success(products);
+
+        // 4. Devolvemos la respuesta paginada
+        var response = new PagedResponse<ProductResponse>(
+            products,
+            totalCount,
+            page,
+            pageSize,
+            totalPages
+        );
+
+        return ServiceResult<PagedResponse<ProductResponse>>.Success(response);
     }
 
     public async Task<ServiceResult<ProductResponse>> CreateAsync(CreateProductRequest request)
@@ -43,14 +67,12 @@ public class ProductService(CatalogDbContext db)
         if (product.Stock < quantity)
             return ServiceResult.Failure($"No hay suficiente stock. Stock actual: {product.Stock}");
 
-        // Restamos el stock
         product.Stock -= quantity;
         await db.SaveChangesAsync();
 
         return ServiceResult.Success();
     }
 
-    // EDITAR PRODUCTO
     public async Task<ServiceResult<ProductResponse>> UpdateAsync(int id, UpdateProductRequest request)
     {
         var product = await db.Products.FindAsync(id);
@@ -67,7 +89,6 @@ public class ProductService(CatalogDbContext db)
         return ServiceResult<ProductResponse>.Success(response);
     }
 
-    // BORRAR PRODUCTO
     public async Task<ServiceResult> DeleteAsync(int id)
     {
         var product = await db.Products.FindAsync(id);
@@ -79,4 +100,3 @@ public class ProductService(CatalogDbContext db)
         return ServiceResult.Success();
     }
 }
-

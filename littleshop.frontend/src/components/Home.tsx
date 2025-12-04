@@ -1,87 +1,161 @@
 ﻿import { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Spinner, Alert, Button } from 'react-bootstrap';
-import { getProducts, Product } from '../services/productService';
-import { useCart } from '../context/CartContext';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Badge } from 'react-bootstrap';
+// Asegúrate de que esta ruta sea correcta según tu proyecto
+import { useCart } from '../context/CartContext'; 
+
+// Definimos la interfaz del Producto
+interface Product {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    stock: number;
+}
+
+// Definimos la interfaz de la respuesta paginada
+interface PagedResponse {
+    items: Product[];
+    totalCount: number;
+    pageNumber: number;
+    pageSize: number;
+    totalPages: number;
+}
+
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 
 export default function Home() {
-    const { addToCart } = useCart();
+    // Estado para los productos
     const [products, setProducts] = useState<Product[]>([]);
+    
+    // Estados para paginación
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const pageSize = 8; // Puedes cambiar esto a 10, 20, etc.
+
+    // Estados de UI
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState('');
+
+    const { addToCart } = useCart();
 
     useEffect(() => {
-        loadProducts();
-    }, []);
+        fetchProducts(currentPage);
+    }, [currentPage]);
 
-    const loadProducts = async () => {
+    const fetchProducts = async (page: number) => {
+        setLoading(true);
+        setError('');
         try {
-            const data = await getProducts();
-            setProducts(data);
+            // Llamamos al endpoint paginado pasando page y pageSize
+            const response = await fetch(`${GATEWAY_URL}/api/v1/products?page=${page}&pageSize=${pageSize}`);
+            
+            if (!response.ok) throw new Error('Error al cargar productos');
+
+            const data: PagedResponse = await response.json();
+
+            // AQUÍ ESTÁ EL CAMBIO CLAVE:
+            // Antes hacías: setProducts(data)
+            // Ahora hacemos: setProducts(data.items)
+            setProducts(data.items);
+            setTotalPages(data.totalPages);
+
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error al cargar productos');
+            setError('No se pudieron cargar los productos. Intenta refrescar.');
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
-    if (loading) return <div className="text-center mt-5"><Spinner animation="border" /></div>;
+    const handlePrev = () => {
+        if (currentPage > 1) setCurrentPage(p => p - 1);
+    };
 
-    if (error) return (
-        <Container className="mt-5">
-            <Alert variant="danger">
-                <h4>Error de conexión</h4>
-                <p>{error}</p>
-                <small>Verifica que el proyecto .NET Aspire esté corriendo.</small>
-            </Alert>
-        </Container>
+    const handleNext = () => {
+        if (currentPage < totalPages) setCurrentPage(p => p + 1);
+    };
+
+    if (loading) return (
+        <div className="text-center mt-5">
+            <Spinner animation="border" variant="primary" />
+            <p className="mt-2 text-muted">Cargando catálogo...</p>
+        </div>
     );
 
+    if (error) return <Alert variant="danger" className="mt-4">{error}</Alert>;
+
     return (
-        <Container className="mt-5">
-            <div className="text-center mb-5">
-                <h1>Bienvenido a LittleShop 🛍️</h1>
-                <p className="lead">Tu tienda de confianza.</p>
+        <Container>
+            <div className="d-flex justify-content-between align-items-center mb-4 mt-2">
+                <h1>Catálogo</h1>
+                <Badge bg="secondary">Página {currentPage} de {totalPages}</Badge>
             </div>
 
-            <Row>
-                {products.length === 0 ? (
-                    <div className="text-center">No hay productos disponibles.</div>
-                ) : (
-                    products.map(p => (
-                        <Col key={p.id} md={4} className="mb-4">
-                            <Card className="h-100 shadow-sm">
+            {products.length === 0 ? (
+                <Alert variant="info">No hay productos disponibles.</Alert>
+            ) : (
+                <Row>
+                    {products.map((product) => (
+                        <Col key={product.id} md={6} lg={4} xl={3} className="mb-4">
+                            <Card className="h-100 shadow-sm hover-shadow transition-all">
+                                {/* Si tuvieras imágenes, irían aquí */}
+                                <div className="bg-light p-4 text-center text-muted" style={{height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                    📦
+                                </div>
                                 <Card.Body className="d-flex flex-column">
-                                    <Card.Title>{p.name}</Card.Title>
-                                    <Card.Text className="text-muted flex-grow-1">
-                                        {p.description}
+                                    <Card.Title className="text-truncate" title={product.name}>
+                                        {product.name}
+                                    </Card.Title>
+                                    <Card.Text className="text-muted small flex-grow-1" style={{minHeight: '3em'}}>
+                                        {product.description?.substring(0, 60)}...
                                     </Card.Text>
-
-                                    {/* SECCIÓN DE PRECIO Y STOCK */}
-                                    <div className="d-flex justify-content-between align-items-center mt-3 mb-3">
-                                        <h4 className="text-primary mb-0">
-                                            {p.price.toFixed(2)} €
-                                        </h4>
-                                        <span className={`badge ${p.stock > 0 ? 'bg-success' : 'bg-danger'}`}>
-                                            {p.stock > 0 ? `Stock: ${p.stock}` : 'Agotado'}
-                                        </span>
+                                    
+                                    <div className="d-flex justify-content-between align-items-center mt-3">
+                                        <h5 className="mb-0 text-primary">{product.price.toFixed(2)}€</h5>
+                                        <Badge bg={product.stock > 0 ? "success" : "danger"}>
+                                            {product.stock > 0 ? `Stock: ${product.stock}` : "Agotado"}
+                                        </Badge>
                                     </div>
 
-                                    {/* BOTÓN AÑADIR AL CARRITO */}
-                                    <Button
-                                        variant="primary"
-                                        className="w-100"
-                                        disabled={p.stock <= 0}
-                                        onClick={() => addToCart(p)}
+                                    <Button 
+                                        variant="dark" 
+                                        className="w-100 mt-3"
+                                        disabled={product.stock === 0}
+                                        onClick={() => addToCart(product)}
                                     >
-                                        {p.stock > 0 ? 'Añadir al carrito 🛒' : 'Agotado'}
+                                        {product.stock > 0 ? 'Añadir al Carrito' : 'Sin Stock'}
                                     </Button>
-
                                 </Card.Body>
                             </Card>
                         </Col>
-                    ))
-                )}
-            </Row>
+                    ))}
+                </Row>
+            )}
+
+            {/* CONTROLES DE PAGINACIÓN */}
+            {totalPages > 1 && (
+                <div className="d-flex justify-content-center gap-3 my-4">
+                    <Button 
+                        variant="outline-primary" 
+                        onClick={handlePrev} 
+                        disabled={currentPage === 1}
+                    >
+                        &larr; Anterior
+                    </Button>
+                    
+                    <span className="align-self-center font-weight-bold">
+                        {currentPage} / {totalPages}
+                    </span>
+
+                    <Button 
+                        variant="outline-primary" 
+                        onClick={handleNext} 
+                        disabled={currentPage === totalPages}
+                    >
+                        Siguiente &rarr;
+                    </Button>
+                </div>
+            )}
         </Container>
     );
 }

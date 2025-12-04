@@ -40,12 +40,11 @@ builder.Services.AddMassTransit(x =>
 });
 
 // 4. OPENAPI (SCALAR)
-// Estas líneas deben ir SIEMPRE antes del Build()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
 // =========================================================
-// AQUÍ SE CONSTRUYE LA APP (SE CIERRA EL REGISTRO DE SERVICIOS)
+// AQUÍ SE CONSTRUYE LA APP
 // =========================================================
 var app = builder.Build();
 
@@ -55,7 +54,7 @@ app.MapDefaultEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference(); // Documentación en /scalar/v1
+    app.MapScalarApiReference();
 
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
@@ -68,10 +67,14 @@ if (app.Environment.IsDevelopment())
 
 var api = app.MapGroup("/api/v1/products").WithTags("Products");
 
-// GET /api/v1/products
-api.MapGet("/", async (ProductService service) =>
+// GET /api/v1/products (AHORA CON PAGINACIÓN)
+// Recibimos 'page' y 'pageSize' como Query Params opcionales (defaults en servicio: 1 y 10)
+api.MapGet("/", async (int? page, int? pageSize, ProductService service) =>
 {
-    var result = await service.GetAllAsync();
+    // Pasamos los valores (o null, el servicio pone los defaults)
+    var result = await service.GetAllAsync(page ?? 1, pageSize ?? 10);
+
+    // Devolvemos 'result.Data' que ahora es un objeto PagedResponse (items, total, pages...)
     return Results.Ok(result.Data);
 });
 

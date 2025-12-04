@@ -1,15 +1,31 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Alert, Spinner, Badge } from 'react-bootstrap';
-import { getProducts, createProduct, updateProduct, deleteProduct, Product, ProductDto } from '../../services/productService';
+import { Table, Button, Modal, Form, Alert, Spinner, Badge, Pagination } from 'react-bootstrap';
+// Quitamos getProducts porque lo haremos manual para paginar
+import { createProduct, updateProduct, deleteProduct, Product, ProductDto } from '../../services/productService';
+
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
+
+// Interfaz para manejar la respuesta flexible del backend (evita el uso de 'any')
+interface PagedApiResponse {
+    items?: Product[];
+    Items?: Product[];
+    totalPages?: number;
+    TotalPages?: number;
+}
 
 export default function AdminProductManagement() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [msg, setMsg] = useState<{ text: string, type: 'success' | 'danger' } | null>(null);
 
+    // Estados de Paginación
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const pageSize = 10; // Tamaño de página para admin
+
     // Estados del Modal
     const [showModal, setShowModal] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null); // Null = Creando, Number = Editando
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     // Formulario
     const [formData, setFormData] = useState<ProductDto>({
@@ -19,22 +35,49 @@ export default function AdminProductManagement() {
         stock: 0
     });
 
-    const fetchProducts = async () => {
+    useEffect(() => { 
+        fetchProducts(currentPage); 
+    }, [currentPage]);
+
+    // Función de carga "Blindada" (Igual que en Home.tsx)
+    const fetchProducts = async (page: number) => {
         setLoading(true);
         try {
-            const data = await getProducts();
-            // Ordenamos por ID para que no bailen al editar
-            setProducts(data.sort((a, b) => a.id - b.id));
+            const response = await fetch(`${GATEWAY_URL}/api/v1/products?page=${page}&pageSize=${pageSize}`);
+            if (!response.ok) throw new Error("Error al cargar productos");
+
+            // CORRECCIÓN ESLINT: Tipamos la respuesta en lugar de usar 'any'
+            const data = await response.json() as Product[] | PagedApiResponse;
+            
+            let productList: Product[] = [];
+            let total = 1;
+
+            // Lógica de detección de formato (Array vs Objeto Paginado)
+            if (Array.isArray(data)) {
+                // Caso A: Array directo (formato antiguo)
+                productList = data;
+                total = 1;
+            } else {
+                // Caso B: Objeto Paginado (formato nuevo)
+                // TypeScript ahora sabe que si no es array, es PagedApiResponse
+                productList = data.items || data.Items || [];
+                total = data.totalPages || data.TotalPages || 1;
+            }
+
+            // Ordenamos por ID para que la tabla no baile
+            setProducts(productList.sort((a, b) => a.id - b.id));
+            setTotalPages(total);
+
         } catch (error) {
+            console.error(error);
             setMsg({ text: 'Error al cargar productos.', type: 'danger' });
+            setProducts([]);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchProducts(); }, []);
-
-    // Abrir Modal (Crear o Editar)
+    // Abrir Modal
     const handleOpenModal = (product?: Product) => {
         if (product) {
             setEditingId(product.id);
@@ -63,8 +106,8 @@ export default function AdminProductManagement() {
                 setMsg({ text: 'Producto creado correctamente.', type: 'success' });
             }
             setShowModal(false);
-            fetchProducts();
-        } catch (error) {
+            fetchProducts(currentPage); // Recargamos la página actual
+        } catch {
             setMsg({ text: 'Error al guardar el producto.', type: 'danger' });
         }
     };
@@ -75,13 +118,13 @@ export default function AdminProductManagement() {
         try {
             await deleteProduct(id);
             setMsg({ text: 'Producto eliminado.', type: 'success' });
-            fetchProducts();
-        } catch (error) {
+            fetchProducts(currentPage);
+        } catch {
             setMsg({ text: 'Error al eliminar. Puede que tenga pedidos asociados.', type: 'danger' });
         }
     };
 
-    if (loading) return <Spinner animation="border" />;
+    if (loading && products.length === 0) return <div className="text-center p-5"><Spinner animation="border" /></div>;
 
     return (
         <div>
@@ -94,45 +137,68 @@ export default function AdminProductManagement() {
 
             {msg && <Alert variant={msg.type} onClose={() => setMsg(null)} dismissible>{msg.text}</Alert>}
 
-            <Table striped bordered hover responsive>
-                <thead>
+            <Table striped bordered hover responsive className="align-middle">
+                <thead className="bg-light">
                     <tr>
-                        <th>ID</th>
+                        <th style={{width: '50px'}}>ID</th>
                         <th>Nombre</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                        <th>Acciones</th>
+                        <th style={{width: '100px'}}>Precio</th>
+                        <th style={{width: '80px'}}>Stock</th>
+                        <th style={{width: '180px'}}>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {products.map(p => (
-                        <tr key={p.id}>
-                            <td>{p.id}</td>
-                            <td>
-                                <strong>{p.name}</strong>
-                                <div className="text-muted small">{p.description?.substring(0, 50)}...</div>
-                            </td>
-                            <td>{p.price.toFixed(2)} €</td>
-                            <td>
-                                <Badge bg={p.stock > 10 ? 'success' : p.stock > 0 ? 'warning' : 'danger'}>
-                                    {p.stock}
-                                </Badge>
-                            </td>
-                            <td>
-                                <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleOpenModal(p)}>
-                                    ✏️ Editar
-                                </Button>
-                                <Button variant="outline-danger" size="sm" onClick={() => handleDelete(p.id)}>
-                                    🗑️ Borrar
-                                </Button>
-                            </td>
-                        </tr>
-                    ))}
+                    {products.length === 0 ? (
+                        <tr><td colSpan={5} className="text-center py-4">No hay productos.</td></tr>
+                    ) : (
+                        products.map(p => (
+                            <tr key={p.id}>
+                                <td>{p.id}</td>
+                                <td>
+                                    <strong>{p.name}</strong>
+                                    <div className="text-muted small text-truncate" style={{maxWidth: '250px'}}>
+                                        {p.description}
+                                    </div>
+                                </td>
+                                <td>{p.price.toFixed(2)} €</td>
+                                <td>
+                                    <Badge bg={p.stock > 10 ? 'success' : p.stock > 0 ? 'warning' : 'danger'}>
+                                        {p.stock}
+                                    </Badge>
+                                </td>
+                                <td>
+                                    <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleOpenModal(p)}>
+                                        ✏️ Editar
+                                    </Button>
+                                    <Button variant="outline-danger" size="sm" onClick={() => handleDelete(p.id)}>
+                                        🗑️ Borrar
+                                    </Button>
+                                </td>
+                            </tr>
+                        ))
+                    )}
                 </tbody>
             </Table>
 
+            {/* CONTROLES DE PAGINACIÓN */}
+            {totalPages > 1 && (
+                <div className="d-flex justify-content-center mt-3">
+                    <Pagination>
+                        <Pagination.Prev 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                            disabled={currentPage === 1} 
+                        />
+                        <Pagination.Item active>{currentPage} / {totalPages}</Pagination.Item>
+                        <Pagination.Next 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                            disabled={currentPage === totalPages} 
+                        />
+                    </Pagination>
+                </div>
+            )}
+
             {/* MODAL DE CREACIÓN / EDICIÓN */}
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
+            <Modal show={showModal} onHide={() => setShowModal(false)} backdrop="static">
                 <Modal.Header closeButton>
                     <Modal.Title>{editingId ? 'Editar Producto' : 'Nuevo Producto'}</Modal.Title>
                 </Modal.Header>

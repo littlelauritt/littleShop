@@ -2,13 +2,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore; // Necesario para Skip, Take, CountAsync
 using Projects.littleShop_identity.Data;
-using Microsoft.AspNetCore.Http.Metadata;
 
 namespace littleShop.identity.Controllers
 {
-
     [ApiController]
     [Route("api/admin/roles")]
     [Authorize(Roles = Roles.Admin)]
@@ -24,13 +22,31 @@ namespace littleShop.identity.Controllers
             _userManager = userManager;
         }
 
+        // GET CON PAGINACIÓN
         [HttpGet]
-        public async Task<IActionResult> GetAllRoles()
+        public async Task<IActionResult> GetAllRoles([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var roles = await _roleManager.Roles.Select(r => new { r.Id, r.Name }).ToListAsync();
-            return Ok(roles);
-        }
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
 
+            var query = _roleManager.Roles;
+
+            // 1. Contar total
+            var totalCount = await query.CountAsync();
+
+            // 2. Paginar
+            var roles = await query
+                .OrderBy(r => r.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new { r.Id, r.Name })
+                .ToListAsync();
+
+            // 3. Devolver respuesta paginada
+            var response = new PagedResponse<object>(roles, totalCount, page, pageSize);
+
+            return Ok(response);
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRoleById(string id)
@@ -68,7 +84,6 @@ namespace littleShop.identity.Controllers
             return Ok(new { Message = "Rol actualizado correctamente" });
         }
 
-
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRole(string id)
         {
@@ -85,7 +100,6 @@ namespace littleShop.identity.Controllers
             return Ok(new { Message = "Rol eliminado correctamente" });
         }
 
-
         [HttpGet("{roleName}/users")]
         public async Task<IActionResult> GetUsersInRole(string roleName)
         {
@@ -96,7 +110,6 @@ namespace littleShop.identity.Controllers
             return Ok(users.Select(u => new { u.Id, u.Email }));
         }
 
-
         [HttpPost("{roleName}/assign/{userId}")]
         public async Task<IActionResult> AssignRole(string roleName, string userId)
         {
@@ -104,7 +117,7 @@ namespace littleShop.identity.Controllers
             if (user == null)
                 return NotFound(new { Message = "Usuario no encontrado" });
 
-            // IMPORTANTE: Validamos contra la BD
+            // Validamos contra la BD
             if (!await _roleManager.RoleExistsAsync(roleName))
                 return BadRequest(new { Message = "El rol no existe en la base de datos" });
 
@@ -114,7 +127,6 @@ namespace littleShop.identity.Controllers
 
             return Ok(new { Message = $"Rol {roleName} asignado al usuario {user.Email}" });
         }
-
 
         [HttpPost("{roleName}/remove/{userId}")]
         public async Task<IActionResult> RemoveRole(string roleName, string userId)

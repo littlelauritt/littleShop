@@ -1,12 +1,18 @@
 ﻿import { useEffect, useState } from 'react';
 import { authenticatedFetch } from '../../assets/api';
-import { Alert, Spinner, Table, Button, Badge } from 'react-bootstrap';
+import { Alert, Spinner, Table, Button, Badge, Pagination } from 'react-bootstrap';
 
-// Definimos la interfaz basándonos en lo que devuelve tu AdminUsersController
 interface User {
     id: string;
     email: string;
-    isLocked: boolean; // Tu controlador devuelve "isLocked"
+    isLocked: boolean;
+}
+
+interface PagedUserResponse {
+    items?: User[];
+    Items?: User[];
+    totalPages?: number;
+    TotalPages?: number;
 }
 
 export default function AdminUserManagement() {
@@ -14,53 +20,62 @@ export default function AdminUserManagement() {
     const [loading, setLoading] = useState(true);
     const [msg, setMsg] = useState<{ text: string, type: 'success' | 'danger' } | null>(null);
 
-    // 1. CARGAR USUARIOS
-    const fetchUsers = async () => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const pageSize = 10;
+
+    const fetchUsers = async (page: number) => {
         setLoading(true);
         try {
-            const data = await authenticatedFetch<User[]>('/api/admin/users', 'GET');
-            // Ordenamos por email para que sea más fácil buscar
-            setUsers(data.sort((a, b) => a.email.localeCompare(b.email)));
+            // GET paginado
+            const data = await authenticatedFetch<User[] | PagedUserResponse>(`/api/admin/users?page=${page}&pageSize=${pageSize}`, 'GET');
+            
+            let list: User[] = [];
+            let total = 1;
+
+            if (Array.isArray(data)) {
+                list = data;
+                total = 1;
+            } else {
+                list = data.items || data.Items || [];
+                total = data.totalPages || data.TotalPages || 1;
+            }
+
+            setUsers(list.sort((a, b) => a.email.localeCompare(b.email)));
+            setTotalPages(total);
         } catch (err) {
-            setMsg({ text: 'Error al cargar usuarios. ¿Eres Admin?', type: 'danger' });
+            setMsg({ text: 'Error al cargar usuarios.', type: 'danger' });
             console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
-    // 2. BLOQUEAR / DESBLOQUEAR
     const toggleLock = async (userId: string, isLocked: boolean) => {
         try {
-            // Tu API espera /lock o /unlock
             const action = isLocked ? 'unlock' : 'lock';
             await authenticatedFetch(`/api/admin/users/${userId}/${action}`, 'POST');
-
             setMsg({ text: `Usuario ${isLocked ? 'desbloqueado' : 'bloqueado'} con éxito.`, type: 'success' });
-            fetchUsers(); // Recargamos la lista
+            fetchUsers(currentPage);
         } catch {
-            setMsg({ text: 'Error al cambiar el estado del usuario.', type: 'danger' });
+            setMsg({ text: 'Error al cambiar el estado.', type: 'danger' });
         }
     };
 
-    // 3. ELIMINAR USUARIO
     const deleteUser = async (userId: string) => {
-        if (!confirm('⚠️ ¿Estás SEGURO de eliminar este usuario? Esta acción es irreversible.')) return;
-
+        if (!confirm('⚠️ ¿Estás SEGURO de eliminar este usuario?')) return;
         try {
             await authenticatedFetch(`/api/admin/users/${userId}`, 'DELETE');
-            setMsg({ text: 'Usuario eliminado correctamente.', type: 'success' });
-            fetchUsers();
+            setMsg({ text: 'Usuario eliminado.', type: 'success' });
+            fetchUsers(currentPage);
         } catch {
             setMsg({ text: 'Error al eliminar usuario.', type: 'danger' });
         }
     };
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    useEffect(() => { fetchUsers(currentPage); }, [currentPage]);
 
-    if (loading) return <div className="text-center p-4"><Spinner animation="border" /></div>;
+    if (loading && users.length === 0) return <div className="text-center p-4"><Spinner animation="border" /></div>;
 
     return (
         <div>
@@ -76,30 +91,19 @@ export default function AdminUserManagement() {
                     </tr>
                 </thead>
                 <tbody>
-                    {users.map(user => (
+                    {users.length === 0 ? <tr><td colSpan={3} className="text-center">No hay usuarios.</td></tr> :
+                    users.map(user => (
                         <tr key={user.id}>
                             <td>{user.email}</td>
                             <td>
-                                {user.isLocked ?
-                                    <Badge bg="danger">Bloqueado</Badge> :
-                                    <Badge bg="success">Activo</Badge>
-                                }
+                                {user.isLocked ? <Badge bg="danger">Bloqueado</Badge> : <Badge bg="success">Activo</Badge>}
                             </td>
                             <td>
                                 <div className="d-flex gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant={user.isLocked ? "success" : "warning"}
-                                        onClick={() => toggleLock(user.id, user.isLocked)}
-                                    >
+                                    <Button size="sm" variant={user.isLocked ? "success" : "warning"} onClick={() => toggleLock(user.id, user.isLocked)}>
                                         {user.isLocked ? "Desbloquear" : "Bloquear"}
                                     </Button>
-
-                                    <Button
-                                        size="sm"
-                                        variant="danger"
-                                        onClick={() => deleteUser(user.id)}
-                                    >
+                                    <Button size="sm" variant="danger" onClick={() => deleteUser(user.id)}>
                                         Eliminar
                                     </Button>
                                 </div>
@@ -108,6 +112,16 @@ export default function AdminUserManagement() {
                     ))}
                 </tbody>
             </Table>
+
+            {totalPages > 1 && (
+                <div className="d-flex justify-content-center mt-3">
+                    <Pagination>
+                        <Pagination.Prev onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} />
+                        <Pagination.Item active>{currentPage} / {totalPages}</Pagination.Item>
+                        <Pagination.Next onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} />
+                    </Pagination>
+                </div>
+            )}
         </div>
     );
 }

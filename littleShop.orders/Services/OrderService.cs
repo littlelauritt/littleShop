@@ -17,7 +17,7 @@ public class OrderService(
     // 1. CREAR PEDIDO
     public async Task<ServiceResult<OrderResponse>> CreateOrderAsync(string userId, string userEmail, CreateOrderRequest request)
     {
-        // A. Validar Stock (Llamada HTTP a Catalog)
+        // A. Validar Stock
         var catalogClient = clientFactory.CreateClient("catalog-api");
         foreach (var item in request.Items)
         {
@@ -33,13 +33,13 @@ public class OrderService(
             }
         }
 
-        // B. Guardar en Base de Datos
+        // B. Guardar
         var order = new Order
         {
             UserId = userId,
             CreatedAt = DateTime.UtcNow,
             Status = OrderStatus.Confirmed,
-            CustomerEmail = userEmail, // Guardamos el email
+            CustomerEmail = userEmail,
             Items = request.Items.Select(i => new OrderItem
             {
                 ProductId = i.ProductId,
@@ -54,7 +54,7 @@ public class OrderService(
         db.Orders.Add(order);
         await db.SaveChangesAsync();
 
-        // C. Publicar Evento (Fire & Forget)
+        // C. Evento
         _ = Task.Run(async () =>
         {
             try
@@ -67,28 +67,24 @@ public class OrderService(
                     order.CreatedAt
                 ));
             }
-            catch 
-            {
-            }
+            catch { }
         });
 
         return ServiceResult<OrderResponse>.Success(MapToResponse(order));
     }
 
-    // 2. ENVIAR PEDIDO (Admin)
+    // 2. ENVIAR PEDIDO
     public async Task<ServiceResult> ShipOrderAsync(int orderId)
     {
         var order = await db.Orders.FindAsync(orderId);
         if (order is null) return ServiceResult.Failure("Pedido no encontrado");
 
-        // Permitimos enviar si está Confirmed o Pending
         if (order.Status != OrderStatus.Confirmed && order.Status != OrderStatus.Pending)
             return ServiceResult.Failure("Solo se envían pedidos confirmados o pendientes");
 
         order.Status = OrderStatus.Shipped;
         await db.SaveChangesAsync();
 
-        // Enviar evento de envío (ESTO DISPARA EL EMAIL)
         _ = Task.Run(async () =>
         {
             try
@@ -96,18 +92,16 @@ public class OrderService(
                 await publishEndpoint.Publish(new OrderShippedEvent(
                     order.Id,
                     order.CustomerEmail ?? "sin-email@littleshop.local",
-                    "ENVIO-12345" // Simulación de tracking
+                    "ENVIO-12345"
                 ));
             }
-            catch
-            {
-            }
+            catch { }
         });
 
         return ServiceResult.Success();
     }
 
-    // 3. CANCELAR PEDIDO (Usuario normal - Chequea UserId)
+    // 3. CANCELAR (Usuario)
     public async Task<ServiceResult> CancelOrderAsync(int orderId, string userId)
     {
         var order = await db.Orders
@@ -121,9 +115,8 @@ public class OrderService(
         order.Status = OrderStatus.Cancelled;
         await db.SaveChangesAsync();
 
-        // Preparamos el diccionario {IdProducto: Cantidad}
         var itemsToRestore = order.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
-        
+
         _ = Task.Run(async () =>
         {
             try
@@ -131,22 +124,19 @@ public class OrderService(
                 await publishEndpoint.Publish(new OrderCancelledEvent(
                     order.Id,
                     order.CustomerEmail,
-                    "Cancelado por el Administrador",
+                    "Cancelado por el Usuario",
                     itemsToRestore
                 ));
             }
-            catch 
-            {
-            }
+            catch { }
         });
 
         return ServiceResult.Success();
     }
 
-    // 4. CANCELAR PEDIDO (Admin)
+    // 4. CANCELAR (Admin)
     public async Task<ServiceResult> CancelOrderAdminAsync(int orderId)
     {
-        // CAMBIO: Añadimos .Include(o => o.Items)
         var order = await db.Orders
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == orderId);
@@ -165,7 +155,7 @@ public class OrderService(
                 order.Id,
                 order.CustomerEmail,
                 "Cancelado por el Admin",
-                itemsToRestore // <--- Pasamos la lista
+                itemsToRestore
             ));
         });
 
@@ -184,15 +174,38 @@ public class OrderService(
         return ServiceResult<IEnumerable<OrderResponse>>.Success(orders.Select(MapToResponse));
     }
 
-    // 6. GET TODOS (ADMIN)
-    public async Task<ServiceResult<IEnumerable<OrderResponse>>> GetAllOrdersAdminAsync()
+    // 6. GET TODOS (ADMIN) - PAGINADO
+    public async Task<ServiceResult<PagedResponse<OrderResponse>>> GetAllOrdersAdminAsync(int page, int pageSize)
     {
-        var orders = await db.Orders
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = db.Orders.AsQueryable();
+
+        // Contamos total real
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        // Obtenemos página
+        var orders = await query
             .Include(o => o.Items)
-            .OrderByDescending(o => o.CreatedAt)
+            .OrderByDescending(o => o.Id) // Importante: orden estable
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return ServiceResult<IEnumerable<OrderResponse>>.Success(orders.Select(MapToResponse));
+        // Mapeamos
+        var mappedOrders = orders.Select(MapToResponse).ToList();
+
+        var response = new PagedResponse<OrderResponse>(
+            mappedOrders,
+            totalCount,
+            page,
+            pageSize,
+            totalPages
+        );
+
+        return ServiceResult<PagedResponse<OrderResponse>>.Success(response);
     }
 
     private static OrderResponse MapToResponse(Order order)
