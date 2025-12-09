@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="coverlet.collector" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="Moq" />
+		<PackageReference Include="NUnit" />
+		<PackageReference Include="NUnit.Analyzers" />
+		<PackageReference Include="NUnit3TestAdapter" />
+
+		<!-- NECESARIO: Porque tu AccountController usa tipos de estas librerías en el constructor -->
+		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="MassTransit" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="NUnit.Framework" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- CORRECCIÓN CRÍTICA: Apuntamos a TU proyecto, no al del profesor -->
+		<ProjectReference Include="..\littleShop.identity\littleShop.identity.csproj" />
+	</ItemGroup>
+
+	<!-- NECESARIO: Para que el test entienda qué es un "Controller" o "IActionResult" -->
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+</Project>

@@ -1,19 +1,20 @@
-﻿using littleShop.identity.Models;
+﻿using Asp.Versioning;
+using FluentValidation;
+using littleshop.serviceDefaults;
+using littleShop.identity.Models;
 using littleShop.identity.Services;
+using MassTransit;
+using MassTransit.JobService;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using Projects.littleShop_identity.Data;
-using System.Text;
-using System.Reflection;
 using Scalar.AspNetCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using littleshop.serviceDefaults;
-using FluentValidation;
-using MassTransit;
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,7 +88,7 @@ builder.Services.AddOpenApi("v1", options =>
 // ---------------------------------------------------------
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddSingleton(jwtOptions);
-builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 builder.Services.AddAuthentication(options =>
 {

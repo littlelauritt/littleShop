@@ -1,14 +1,15 @@
-﻿using littleShop.identity.Models;
+﻿using FluentValidation;
+using littleShop.identity.Models;
 using littleShop.identity.Services;
+using littleShop.Shared.Events;
+using MassTransit;
+using MassTransit.JobService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Projects.littleShop_identity.Data;
 using System.Security.Claims;
-using MassTransit;
-using littleShop.Shared.Events;
-using FluentValidation;
-using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 
 namespace littleShop.identity.Controllers
@@ -19,13 +20,13 @@ namespace littleShop.identity.Controllers
     public class AccountController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly JwtService _jwtService;
+        private readonly IJwtService _jwtService;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IValidator<RegisterRequest> _registerValidator;
 
         public AccountController(
             UserManager<IdentityUser> userManager,
-            JwtService jwtService,
+            IJwtService jwtService,
             IPublishEndpoint publishEndpoint,
             IValidator<RegisterRequest> registerValidator)
         {

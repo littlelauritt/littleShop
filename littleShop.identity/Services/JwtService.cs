@@ -1,16 +1,17 @@
-﻿using System.Security.Claims;
-using System.Text;
-using littleShop.identity.Models;
+﻿using littleShop.identity.Models;
+using MassTransit.JobService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System;
-using System.Threading.Tasks;
 using Projects.littleShop_identity.Data;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace littleShop.identity.Services
 {
-    public class JwtService
+    public class JwtService : IJwtService
     {
         private readonly IConfiguration _config;
         private readonly ApplicationDbContext _context;
