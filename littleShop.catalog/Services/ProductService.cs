@@ -99,4 +99,21 @@ public class ProductService(CatalogDbContext db)
 
         return ServiceResult.Success();
     }
+    public async Task<ServiceResult<ProductResponse>> GetByIdAsync(int id)
+    {
+        var product = await db.Products.FindAsync(id);
+
+        if (product == null)
+            return ServiceResult<ProductResponse>.Failure($"Producto {id} no encontrado.");
+
+        var response = new ProductResponse(
+            product.Id,
+            product.Name,
+            product.Description,
+            product.Price,
+            product.Stock
+        );
+
+        return ServiceResult<ProductResponse>.Success(response);
+    }
 }

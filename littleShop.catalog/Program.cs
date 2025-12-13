@@ -101,6 +101,15 @@ api.MapGet("/", async (int? page, int? pageSize, ProductService service) =>
     return Results.Ok(result.Data);
 });
 
+api.MapGet("/{id:int}", async (int id, ProductService service) =>
+{
+var result = await service.GetByIdAsync(id);
+return result.Succeeded
+    ? Results.Ok(result.Data)
+    : Results.NotFound(new { error = result.Errors });
+});
+
+
 api.MapPost("/", async (CreateProductRequest request, ProductService service) =>
 {
     var result = await service.CreateAsync(request);
