@@ -5,8 +5,11 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<InvariantGlobalization>true</InvariantGlobalization>
-	  <UserSecretsId>976a6285-1047-4e1a-b3dd-afb7d0091128</UserSecretsId>
-  </PropertyGroup>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+		  <UserSecretsId>976a6285-1047-4e1a-b3dd-afb7d0091128</UserSecretsId>
+	</PropertyGroup>
+
 
 	<ItemGroup>
 		<PackageReference Include="MassTransit.RabbitMQ" />
@@ -19,11 +22,12 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
 
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\littleShop.Shared\littleShop.Shared.csproj" />
-		<ProjectReference Include="..\littleShop.serviceDefaults\littleShop.serviceDefaults.csproj" />
+		<ProjectReference Include="..\littleshop.serviceDefaults\littleshop.serviceDefaults.csproj" />
 	</ItemGroup>
 
 </Project>

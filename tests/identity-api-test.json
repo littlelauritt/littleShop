@@ -1,0 +1,175 @@
+{
+  "info": {
+    "_postman_id": "identity-integration-full",
+    "name": "Identity API Full Integration",
+    "description": "Tests completos: Registro, Login y Errores",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check (Scalar/OpenAPI)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/openapi/v1.json",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "openapi", "v1.json" ]
+        }
+      }
+    },
+    {
+      "name": "2. Register User - Success",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const random = Math.floor(Math.random() * 100000);",
+              "pm.environment.set(\"current_email\", `user${random}@test.com`);",
+              "pm.environment.set(\"current_password\", \"Pass123$!\");"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{current_email}}\",\n  \"password\": \"{{current_password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Account/register",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "Account", "register" ]
+        }
+      }
+    },
+    {
+      "name": "3. Login User - Success",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Response has Token\", function () { pm.expect(jsonData).to.have.property('token'); });",
+              "pm.test(\"Response has Expiration\", function () { pm.expect(jsonData).to.have.property('expiration'); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{current_email}}\",\n  \"password\": \"{{current_password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Account/login",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "Account", "login" ]
+        }
+      }
+    },
+    {
+      "name": "4. Login - Wrong Password",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{current_email}}\",\n  \"password\": \"WRONG_PASSWORD\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Account/login",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "Account", "login" ]
+        }
+      }
+    },
+    {
+      "name": "5. Login - Non-existent User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ghost_user@test.com\",\n  \"password\": \"Pass123$!\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Account/login",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "Account", "login" ]
+        }
+      }
+    }
+  ]
+}

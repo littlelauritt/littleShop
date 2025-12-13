@@ -33,6 +33,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.catalog.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.orders.Tests", "littleShop.orders.Tests\littleShop.orders.Tests.csproj", "{4B40121A-4EB9-4E4A-A9F7-EDA125BE90C8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2F231BB0-4271-45F5-AEFB-833183E70513}"
+	ProjectSection(SolutionItems) = preProject
+		identity-api-test.json = identity-api-test.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5E65F73F-8849-47FC-8000-49C0AF1E3509}"
+	ProjectSection(SolutionItems) = preProject
+		identity-pipeline.yml = identity-pipeline.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

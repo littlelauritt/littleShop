@@ -1,0 +1,95 @@
+﻿name: Identity API CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'littleShop.identity/**'
+      - 'littleShop.Shared/**'
+      - 'littleshop.serviceDefaults/**'
+      - '.github/workflows/**'
+      - 'docker-compose.yml'       
+      - 'tests/**'                 
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/identity-api
+
+jobs:
+  # -----------------------------------------------------------------
+  # TRABAJO 1: LA BASE DE LA PIRÁMIDE (Build & Tests Unitarios)
+  # -----------------------------------------------------------------
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET 10 Preview
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore Dependencies
+      run: dotnet restore littleShop.identity/littleShop.identity.csproj
+
+    - name: Build
+      run: dotnet build littleShop.identity/littleShop.identity.csproj --no-restore -c Release
+
+    - name: Run Unit Tests
+      run: dotnet test littleShop.identity.Tests/littleShop.identity.Tests.csproj --verbosity normal
+
+  # -----------------------------------------------------------------
+  # TRABAJO 2: EL MEDIO DE LA PIRÁMIDE (Docker & Integración)
+  # -----------------------------------------------------------------
+  docker-build-push:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # 1. Construir y subir la imagen (para tenerla guardada)
+    - name: Build and Push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./littleShop.identity/Dockerfile
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+    # 2. EJECUTAR TESTS DE INTEGRACIÓN (AQUÍ ESTÁ EL CAMBIO)
+    # Usamos docker compose para levantar API + BD + RabbitMQ
+    - name: Run Integration Tests (Docker Compose)
+      run: |
+        # A. Arrancar todo el entorno usando tu archivo docker-compose.yml
+        # El flag --build asegura que use el código actual
+        docker compose up -d --build
+        
+        # B. Esperar a que la Base de Datos y RabbitMQ estén listos
+        echo "⏳ Esperando 15 segundos a que los servicios arranquen..."
+        sleep 15
+        
+        # C. Instalar Newman (la herramienta de test)
+        npm install -g newman
+        
+        # D. Lanzar los tests contra http://localhost:5001 (definido en tu compose)
+        newman run ./tests/identity-api-test.json
+        
+        # E. Apagar todo al terminar para limpiar
+        docker compose down

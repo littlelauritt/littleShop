@@ -4,29 +4,29 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
 		<NoWarn>$(NoWarn);1591</NoWarn>
 		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-	  <UserSecretsId>85e6f5f2-4711-47c5-9c50-84c00a53357b</UserSecretsId>
-  </PropertyGroup>
+		    <UserSecretsId>85e6f5f2-4711-47c5-9c50-84c00a53357b</UserSecretsId>
+	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Versionado -->
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Asp.Versioning.Mvc" />
 		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
 
-		<!-- Base de datos -->
 		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Aspire.RabbitMQ.Client" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
 		<PackageReference Include="MassTransit.RabbitMQ" />
 
-		<!-- Identity -->
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 
-		<!-- Herramientas EF Core -->
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -36,18 +36,15 @@
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 
-		<!-- Npgsql para EF Core -->
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 
-		<!-- Otros -->
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 		<PackageReference Include="Scalar.AspNetCore" />
-		<PackageReference Include="Swashbuckle.AspNetCore" />
+
 		<PackageReference Include="Microsoft.OpenApi" />
-		
-		<ProjectReference Include="..\littleshop.serviceDefaults\littleshop.serviceDefaults.csproj" />
-		
+
 		<ProjectReference Include="..\littleShop.Shared\littleShop.Shared.csproj" />
+		<ProjectReference Include="..\littleshop.serviceDefaults\littleshop.serviceDefaults.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -1,4 +1,6 @@
-﻿namespace littleShop.identity.Models
+﻿using System.Text.Json.Serialization;
+
+namespace littleShop.identity.Models
 {
     public class RegisterRequest
     {
@@ -14,8 +16,13 @@
 
     public class AuthResponse
     {
+        [JsonPropertyName("token")]
         public required string Token { get; set; }
+
+        [JsonPropertyName("refreshToken")]
         public required string RefreshToken { get; set; }
+
+        [JsonPropertyName("expiration")] // ← Esto hace que se serialice como "expiration"
         public required DateTime ExpiresAt { get; set; }
     }
 

@@ -1,28 +1,77 @@
-version: '3.9'  
+version: '3.8'
 
 services:
-  identity-api:
-    build:
-      context: ./littleShop.identity
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-      - "8081:8081"
+  # -----------------------------------------------------------------------
+  # 1. BASE DE DATOS (PostgreSQL)
+  # -----------------------------------------------------------------------
+  identity-db:
+    image: postgres:16-alpine
+    container_name: identity-db
+    restart: always
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=mydatabase;Username=postgres;Password=mysecretpassword
-    depends_on:
-      - postgres-db
-
-  postgres-db:
-    image: postgres:18
-    container_name: postgres-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: mydatabase
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=identitydb
     ports:
       - "5432:5432"
     volumes:
-      - ./docker_data/postgres:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
+    # Esto comprueba cada 5s si la BD está lista para aceptar conexiones
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d identitydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # -----------------------------------------------------------------------
+  # 2. MENSAJERÍA (RabbitMQ) - ¡OBLIGATORIO POR MASSTRANSIT!
+  # -----------------------------------------------------------------------
+  identity-rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: identity-rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"   # Puerto para que conecte la API
+      - "15672:15672" # Puerto para que tú veas el panel web
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # -----------------------------------------------------------------------
+  # 3. TU API (Identity)
+  # -----------------------------------------------------------------------
+  identity-api:
+    build:
+      context: .                          # <--- IMPORTANTE: Contexto es la raíz (.)
+      dockerfile: littleShop.identity/Dockerfile
+    container_name: identity-api
+    restart: on-failure
+    depends_on:
+      identity-db:
+        condition: service_healthy        # Espera a que la BD esté verde
+      identity-rabbitmq:
+        condition: service_healthy        # Espera a que Rabbit esté verde
+    ports:
+      - "5001:8080"                       # Mapeamos 5001 de tu PC al 8080 del contenedor
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      
+      # CONEXIÓN BD (Coincide con el nombre del servicio 'identity-db')
+      - ConnectionStrings__identitydb=Host=identity-db;Database=identitydb;Username=postgres;Password=postgres
+      
+      # CONEXIÓN RABBITMQ (Coincide con el nombre del servicio 'identity-rabbitmq')
+      - ConnectionStrings__messaging=amqp://guest:guest@identity-rabbitmq:5672
+      
+      # CLAVES JWT (Necesarias para que no falle al arrancar)
+      - Jwt__Issuer=littleShop-test
+      - Jwt__Audience=littleShop-test
+      - Jwt__Key=EstaEsUnaClaveSecretaMuyLargaYSegura123!
+
+volumes:
+  postgres_data:

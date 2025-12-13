@@ -53,10 +53,18 @@ namespace littleShop.identity.Controllers
 
             await _userManager.AddToRoleAsync(user, Roles.User);
 
-            // Generar y codificar token de forma segura
+            // Generar token de confirmación
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
+            // ⬇️ NUEVO: AUTO-CONFIRMAR SOLO EN DESARROLLO (para que pasen los tests)
+            var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+            if (isDevelopment)
+            {
+                await _userManager.ConfirmEmailAsync(user, token);
+            }
+
+            // Codificar token y publicar evento (el email se envía igual)
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
             await _publishEndpoint.Publish(new UserCreatedEvent(
                 user.Id,
                 user.Email!,

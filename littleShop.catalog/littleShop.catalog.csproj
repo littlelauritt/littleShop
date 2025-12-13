@@ -5,6 +5,8 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<InvariantGlobalization>true</InvariantGlobalization>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -15,10 +17,11 @@
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
 		<PackageReference Include="MassTransit.RabbitMQ" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\littleShop.serviceDefaults\littleShop.serviceDefaults.csproj" />
+		<ProjectReference Include="..\littleshop.serviceDefaults\littleshop.serviceDefaults.csproj" />
 		<ProjectReference Include="..\littleShop.Shared\littleShop.Shared.csproj" />
 	</ItemGroup>
 
