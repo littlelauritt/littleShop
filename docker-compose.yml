@@ -137,7 +137,9 @@ services:
       identity-rabbitmq:
         condition: service_healthy
       identity-api:
-        condition: service_started  # Orders necesita Identity para validar JWT
+        condition: service_started
+      catalog-api:
+        condition: service_started
     ports:
       - "5003:8080"
     environment:
