@@ -94,7 +94,6 @@ jobs:
         
         # 4. Instalar y lanzar Newman
         npm install -g newman
-        newman run ./tests/identity-api-test.json
-        
+        newman run ./tests/identity-api-test.json --env-var baseUrl=http://localhost:5001        
         # 5. Limpiar
         docker compose down
