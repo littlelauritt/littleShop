@@ -18,7 +18,6 @@
 		<PackageReference Include="Scalar.AspNetCore" />
 
 		<PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
 
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
