@@ -1,0 +1,158 @@
+{
+  "info": {
+    "_postman_id": "catalog-integration",
+    "name": "Catalog API Integration",
+    "description": "Tests para Catálogo: Crear, Listar y Modificar productos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check (Scalar)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/openapi/v1.json",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "openapi", "v1.json" ]
+        }
+      }
+    },
+    {
+      "name": "2. Create Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201 Created\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"product_id\", jsonData.id);",
+              "pm.test(\"Product has ID\", function () { pm.expect(jsonData.id).to.be.above(0); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Camiseta Docker\",\n  \"description\": \"Camiseta super chula\",\n  \"price\": 19.99,\n  \"stock\": 100\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/products",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "v1", "products" ]
+        }
+      }
+    },
+    {
+      "name": "3. Get All Products",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Is Array or Paged\", function () { pm.expect(jsonData).to.not.be.null; });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/products?page=1&pageSize=5",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "v1", "products" ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "pageSize",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Reduce Stock",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"stock\": 5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/products/{{product_id}}/reduce-stock",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "v1", "products", "{{product_id}}", "reduce-stock" ]
+        }
+      }
+    },
+    {
+      "name": "5. Delete Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204 No Content\", function () { pm.response.to.have.status(204); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/products/{{product_id}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "v1", "products", "{{product_id}}" ]
+        }
+      }
+    }
+  ]
+}

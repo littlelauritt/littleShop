@@ -35,6 +35,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "littleShop.orders.Tests", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2F231BB0-4271-45F5-AEFB-833183E70513}"
 	ProjectSection(SolutionItems) = preProject
+		catalog-api-test.json = catalog-api-test.json
 		identity-api-test.json = identity-api-test.json
 	EndProjectSection
 EndProject
@@ -42,6 +43,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5E65
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{CDB39AF3-7697-4C44-9497-449DC697A11B}"
 	ProjectSection(SolutionItems) = preProject
+		catalog-pipeline.yml = catalog-pipeline.yml
 		.github\workflows\identity-pipeline.yml = .github\workflows\identity-pipeline.yml
 	EndProjectSection
 EndProject
