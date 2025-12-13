@@ -6,6 +6,7 @@ using littleShop.catalog.Consumers;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using MassTransit;
+using littleShop.catalog.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,13 +58,24 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-        // Esto crea la tabla si no existe
         await db.Database.MigrateAsync();
         Console.WriteLine("✅ Base de datos de Catálogo migrada correctamente.");
+
+        // ✅ AÑADIR ESTO:
+        if (!db.Products.Any())
+        {
+            db.Products.AddRange(
+                new Product { Name = "Producto Test 1", Description = "Producto de prueba", Price = 10.00m, Stock = 100 },
+                new Product { Name = "Producto Test 2", Description = "Otro producto", Price = 25.50m, Stock = 50 },
+                new Product { Name = "Producto Test 3", Description = "Más pruebas", Price = 15.00m, Stock = 75 }
+            );
+            await db.SaveChangesAsync();
+            Console.WriteLine("✅ Productos de prueba creados.");
+        }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"⚠️ Error migrando DB Catálogo (Puede que Postgres aún no esté listo): {ex.Message}");
+        Console.WriteLine($"⚠️ Error migrando DB Catálogo: {ex.Message}");
     }
 }
 
