@@ -21,9 +21,10 @@ builder.AddNpgsqlDbContext<OrdersDbContext>("ordersdb");
 builder.Services.AddScoped<OrderService>();
 
 // 3. Cliente HTTP (Para llamar al Catálogo)
+// IMPORTANTE: En Docker, esto buscará el servicio por nombre de contenedor
 builder.Services.AddHttpClient("catalog-api", client =>
 {
-    client.BaseAddress = new Uri("https+http://littleshop-catalog");
+    client.BaseAddress = new Uri("http://littleshop-catalog:8080");
 });
 
 // 4. RabbitMQ (MassTransit)
@@ -49,6 +50,7 @@ var secretKey = jwtOptions["Key"];
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.RequireHttpsMetadata = false; // Importante para Docker interno
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -70,16 +72,28 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// 7. Migraciones Automáticas
-if (app.Environment.IsDevelopment())
+// 7. MIGRACIONES Y DOCS (Corregido para Docker)
+// Sacamos esto fuera del 'if Development'
+using (var scope = app.Services.CreateScope())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
-    await db.Database.MigrateAsync();
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
+        await db.Database.MigrateAsync();
+        Console.WriteLine("✅ Base de datos de Orders migrada.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Error migrando DB Orders: {ex.Message}");
+    }
 }
+
+app.MapOpenApi();
+app.MapScalarApiReference(options =>
+{
+    options.WithTitle("LittleShop Orders API");
+    options.WithTheme(ScalarTheme.Moon); // Tema oscuro para diferenciar
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -90,24 +104,20 @@ app.UseAuthorization();
 
 var api = app.MapGroup("/api/v1/orders").WithTags("Orders").RequireAuthorization();
 
-// GET / (Ver mis pedidos)
 api.MapGet("/", async (OrderService service, ClaimsPrincipal user) =>
 {
     var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
     if (userId == null) return Results.Unauthorized();
-
     var result = await service.GetMyOrdersAsync(userId);
     return Results.Ok(result.Data);
 });
 
-// POST / (Crear pedido)
 api.MapPost("/", async (CreateOrderRequest request, OrderService service, ClaimsPrincipal user) =>
 {
     var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
     var email = user.FindFirstValue(ClaimTypes.Email) ?? user.FindFirstValue("email");
 
     if (userId == null) return Results.Unauthorized();
-
     var safeEmail = email ?? "unknown@littleshop.local";
 
     var result = await service.CreateOrderAsync(userId, safeEmail, request);
@@ -118,57 +128,14 @@ api.MapPost("/", async (CreateOrderRequest request, OrderService service, Claims
     return Results.Created($"/api/v1/orders/{result.Data!.Id}", result.Data);
 });
 
-// POST /{id}/cancel (Cancelar Pedido - Usuario)
-api.MapPost("/{id:int}/cancel", async (int id, OrderService service, ClaimsPrincipal user) =>
-{
-    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-    if (userId == null) return Results.Unauthorized();
-
-    var result = await service.CancelOrderAsync(id, userId);
-
-    if (!result.Succeeded) return Results.BadRequest(result.Errors);
-
-    return Results.Ok(new { Message = "Pedido cancelado correctamente" });
-});
-
-// --- ADMIN ENDPOINTS ---
-// Usamos MapGroup para agrupar rutas de admin
+// Admin endpoints
 var adminApi = api.MapGroup("/admin");
 
-// GET /api/v1/orders/admin (Ver Todo Paginado) - CORREGIDO
 adminApi.MapGet("/", async (int? page, int? pageSize, OrderService service, ClaimsPrincipal user) =>
 {
     if (!user.IsInRole("Admin")) return Results.Forbid();
-
-    // AQUÍ ESTABA EL ERROR: Faltaba pasar los parámetros page y pageSize
     var result = await service.GetAllOrdersAdminAsync(page ?? 1, pageSize ?? 10);
     return Results.Ok(result.Data);
-});
-
-// POST /api/v1/orders/admin/{id}/ship (Enviar pedido)
-adminApi.MapPost("/{id:int}/ship", async (int id, OrderService service, ClaimsPrincipal user) =>
-{
-    if (!user.IsInRole("Admin")) return Results.Forbid();
-
-    var result = await service.ShipOrderAsync(id);
-
-    if (!result.Succeeded)
-        return Results.BadRequest(new { Error = result.Errors });
-
-    return Results.Ok(new { Message = "Pedido marcado como enviado" });
-});
-
-// POST /api/v1/orders/admin/{id}/cancel (Cancelar Admin)
-adminApi.MapPost("/{id:int}/cancel", async (int id, OrderService service, ClaimsPrincipal user) =>
-{
-    if (!user.IsInRole("Admin")) return Results.Forbid();
-
-    var result = await service.CancelOrderAdminAsync(id);
-
-    if (!result.Succeeded)
-        return Results.BadRequest(new { Error = result.Errors });
-
-    return Results.Ok(new { Message = "Pedido cancelado por admin" });
 });
 
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));

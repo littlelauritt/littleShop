@@ -37,6 +37,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2F231BB0
 	ProjectSection(SolutionItems) = preProject
 		catalog-api-test.json = catalog-api-test.json
 		identity-api-test.json = identity-api-test.json
+		orders-api-test.json = orders-api-test.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5E65F73F-8849-47FC-8000-49C0AF1E3509}"
@@ -45,6 +46,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 	ProjectSection(SolutionItems) = preProject
 		catalog-pipeline.yml = catalog-pipeline.yml
 		.github\workflows\identity-pipeline.yml = .github\workflows\identity-pipeline.yml
+		.github\workflows\orders-pipeline.yml = .github\workflows\orders-pipeline.yml
 	EndProjectSection
 EndProject
 Global
