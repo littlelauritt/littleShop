@@ -8,18 +8,18 @@ on:
       - 'littleShop.Shared/**'
       - 'littleshop.serviceDefaults/**'
       - '.github/workflows/**'
-      - 'docker-compose.yml'       
-      - 'tests/**'                 
+      - 'docker-compose.yml'
+      - 'tests/**'
   pull_request:
     branches: [ "main" ]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/identity-api
+  # Quitamos IMAGE_NAME de aquí porque lo vamos a calcular dinámicamente en minúsculas abajo
 
 jobs:
   # -----------------------------------------------------------------
-  # TRABAJO 1: LA BASE DE LA PIRÁMIDE (Build & Tests Unitarios)
+  # TRABAJO 1: BUILD & TEST
   # -----------------------------------------------------------------
   build-and-test:
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
       run: dotnet test littleShop.identity.Tests/littleShop.identity.Tests.csproj --verbosity normal
 
   # -----------------------------------------------------------------
-  # TRABAJO 2: EL MEDIO DE LA PIRÁMIDE (Docker & Integración)
+  # TRABAJO 2: DOCKER & INTEGRATION
   # -----------------------------------------------------------------
   docker-build-push:
     needs: build-and-test
@@ -54,6 +54,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # --- PASO NUEVO: ELIMINAR MAYÚSCULAS ---
+    # Esto coge 'littleShop' y lo convierte en 'littleshop' para que Docker no llore
+    - name: Convert repository name to lowercase
+      run: |
+        echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -64,32 +70,31 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # 1. Construir y subir la imagen (para tenerla guardada)
     - name: Build and Push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         file: ./littleShop.identity/Dockerfile
         push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        # Usamos la variable nueva en minúsculas
+        tags: ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/identity-api:latest
 
-    # 2. EJECUTAR TESTS DE INTEGRACIÓN (AQUÍ ESTÁ EL CAMBIO)
-    # Usamos docker compose para levantar API + BD + RabbitMQ
     - name: Run Integration Tests (Docker Compose)
       run: |
-        # A. Arrancar todo el entorno usando tu archivo docker-compose.yml
-        # El flag --build asegura que use el código actual
+        # 1. Ajustar el docker-compose para usar la imagen correcta
+        # Como docker-compose.yml suele apuntar a local, forzamos la imagen del registry
+        export IDENTITY_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/identity-api:latest
+        
+        # 2. Arrancar entorno
         docker compose up -d --build
         
-        # B. Esperar a que la Base de Datos y RabbitMQ estén listos
-        echo "⏳ Esperando 15 segundos a que los servicios arranquen..."
+        # 3. Esperar
+        echo "⏳ Esperando 15 segundos..."
         sleep 15
         
-        # C. Instalar Newman (la herramienta de test)
+        # 4. Instalar y lanzar Newman
         npm install -g newman
-        
-        # D. Lanzar los tests contra http://localhost:5001 (definido en tu compose)
         newman run ./tests/identity-api-test.json
         
-        # E. Apagar todo al terminar para limpiar
+        # 5. Limpiar
         docker compose down

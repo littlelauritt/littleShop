@@ -39,8 +39,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2F231BB0
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{5E65F73F-8849-47FC-8000-49C0AF1E3509}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{CDB39AF3-7697-4C44-9497-449DC697A11B}"
 	ProjectSection(SolutionItems) = preProject
-		identity-pipeline.yml = identity-pipeline.yml
+		.github\workflows\identity-pipeline.yml = .github\workflows\identity-pipeline.yml
 	EndProjectSection
 EndProject
 Global
@@ -102,6 +104,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CDB39AF3-7697-4C44-9497-449DC697A11B} = {5E65F73F-8849-47FC-8000-49C0AF1E3509}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7A5272B-9BA1-493F-8598-4CEDA18376B5}
