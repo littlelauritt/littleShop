@@ -75,8 +75,8 @@ jobs:
         # Arrancamos TODO (Identity + Catalog + Orders + DBs)
         docker compose up -d --build
         
-        echo "⏳ Esperando 20 segundos para que todo arranque..."
-        sleep 20
+        echo "⏳ Esperando 60 segundos para que todo arranque..."
+        sleep 60
         
         # Primero registramos un usuario en Identity para que el Login funcione
         # (Esto es un truco rápido usando curl)

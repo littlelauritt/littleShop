@@ -24,7 +24,7 @@ builder.Services.AddScoped<OrderService>();
 // IMPORTANTE: En Docker, esto buscará el servicio por nombre de contenedor
 builder.Services.AddHttpClient("catalog-api", client =>
 {
-    client.BaseAddress = new Uri("http://littleshop-catalog:8080");
+    client.BaseAddress = new Uri("http://catalog-api:8080");
 });
 
 // 4. RabbitMQ (MassTransit)

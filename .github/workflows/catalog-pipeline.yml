@@ -80,8 +80,8 @@ jobs:
         docker compose up -d --build
         
         # 3. Esperar
-        echo "⏳ Esperando 15 segundos..."
-        sleep 15
+        echo "⏳ Esperando 60 segundos (GitHub es lento)..."
+        sleep 60
         
         # 4. Test con Newman (OJO AL PUERTO 5002)
         npm install -g newman
