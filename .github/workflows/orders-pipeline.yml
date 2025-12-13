@@ -69,23 +69,25 @@ jobs:
 
     - name: Run Integration Tests (Docker Compose)
       run: |
-        # Usamos las imágenes del registry
         export ORDERS_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
         
-        # Arrancamos TODO (Identity + Catalog + Orders + DBs)
         docker compose up -d --build
         
-        echo "⏳ Esperando 60 segundos para que todo arranque..."
+        echo "⏳ Esperando 60 segundos..."
         sleep 60
         
-        # Primero registramos un usuario en Identity para que el Login funcione
-        # (Esto es un truco rápido usando curl)
+        # 🕵️‍♂️ MODO DETECTIVE ACTIVADO 🕵️‍♂️
+        echo "==== 🔍 ESTADO DE LOS CONTENEDORES ===="
+        docker ps -a
+        echo "==== 📜 LOGS DE ORDERS-API (EL CULPABLE) ===="
+        docker logs orders-api || echo "No se pudieron obtener logs de orders-api"
+        echo "==================================="
+        
         curl -X POST http://localhost:5001/api/Account/register \
              -H "Content-Type: application/json" \
              -d '{"email":"admin@test.com", "password":"Pass123$!"}'
         
         npm install -g newman
-        # Ejecutamos el test contra el puerto 5003 (Orders)
         newman run ./tests/orders-api-test.json --env-var baseUrl=http://localhost:5003
         
         docker compose down

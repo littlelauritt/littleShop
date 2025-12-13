@@ -34,10 +34,6 @@ jobs:
     - name: Build
       run: dotnet build littleShop.catalog/littleShop.catalog.csproj --no-restore -c Release
 
-    # Si tienes tests unitarios de catálogo, descomenta esto:
-    # - name: Run Unit Tests
-    #   run: dotnet test littleShop.catalog.Tests/littleShop.catalog.Tests.csproj --verbosity normal
-
   docker-build-push:
     needs: build-and-test
     runs-on: ubuntu-latest
@@ -48,7 +44,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Convertir a minúsculas para Docker
     - name: Convert repository name to lowercase
       run: |
         echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
@@ -73,19 +68,23 @@ jobs:
 
     - name: Run Integration Tests (Docker Compose)
       run: |
-        # 1. Forzar uso de imágenes del registry
         export CATALOG_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/catalog-api:latest
         
-        # 2. Arrancar entorno
         docker compose up -d --build
         
-        # 3. Esperar
-        echo "⏳ Esperando 60 segundos (GitHub es lento)..."
+        echo "⏳ Esperando 60 segundos..."
         sleep 60
         
-        # 4. Test con Newman (OJO AL PUERTO 5002)
+        # 🕵️‍♂️ MODO DETECTIVE ACTIVADO 🕵️‍♂️
+        echo "==== 🔍 ESTADO DE LOS CONTENEDORES ===="
+        docker ps -a
+        echo "==== 📜 LOGS DE CATALOG-API (EL CULPABLE) ===="
+        docker logs catalog-api || echo "No se pudieron obtener logs de catalog-api"
+        echo "==== 📜 LOGS DE CATALOG-DB ===="
+        docker logs catalog-db || echo "No se pudieron obtener logs de catalog-db"
+        echo "==================================="
+        
         npm install -g newman
         newman run ./tests/catalog-api-test.json --env-var baseUrl=http://localhost:5002
         
-        # 5. Limpiar
         docker compose down
