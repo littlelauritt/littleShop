@@ -2,223 +2,231 @@
 using littleShop.orders.DTOs;
 using littleShop.orders.Entities;
 using littleShop.orders.Shared;
-using Microsoft.EntityFrameworkCore;
-using System.Net.Http.Json;
-using MassTransit;
+using littleShop.Shared;
 using littleShop.Shared.Events;
+using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.Json;
 
 namespace littleShop.orders.Services;
 
-public class OrderService(
-    OrdersDbContext db,
-    IHttpClientFactory clientFactory,
-    IPublishEndpoint publishEndpoint)
+public class OrderService
 {
-    // 1. CREAR PEDIDO
-    public async Task<ServiceResult<OrderResponse>> CreateOrderAsync(string userId, string userEmail, CreateOrderRequest request)
+    private readonly OrdersDbContext _context;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IPublishEndpoint _publishEndpoint;
+
+    public OrderService(
+        OrdersDbContext context,
+        IHttpClientFactory httpClientFactory,
+        IPublishEndpoint publishEndpoint)
     {
-        // A. Validar Stock
-        var catalogClient = clientFactory.CreateClient("catalog-api");
-        foreach (var item in request.Items)
+        _context = context;
+        _httpClientFactory = httpClientFactory;
+        _publishEndpoint = publishEndpoint;
+    }
+
+    public async Task<ServiceResult<OrderResponse>> CreateOrderAsync(
+        string userId,
+        string email,
+        CreateOrderRequest request)
+    {
+        try
         {
-            var response = await catalogClient.PostAsJsonAsync(
-                $"/api/v1/products/{item.ProductId}/reduce-stock",
-                new { Stock = item.Quantity }
+            // Validaciones
+            if (request.Items == null || !request.Items.Any())
+                return ServiceResult<OrderResponse>.Failure("El pedido debe tener al menos un producto.");
+
+            if (string.IsNullOrWhiteSpace(request.ShippingAddress))
+                return ServiceResult<OrderResponse>.Failure("La dirección de envío es obligatoria.");
+
+            // Obtener nombres de productos del catálogo
+            var catalogClient = _httpClientFactory.CreateClient("catalog-api");
+            var orderItems = new List<OrderItem>();
+
+            foreach (var item in request.Items)
+            {
+                var productResponse = await catalogClient.GetAsync($"/api/v1/products/{item.ProductId}");
+
+                if (!productResponse.IsSuccessStatusCode)
+                    return ServiceResult<OrderResponse>.Failure($"Producto {item.ProductId} no encontrado.");
+
+                var productJson = await productResponse.Content.ReadAsStringAsync();
+                var product = JsonSerializer.Deserialize<ProductDto>(productJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                orderItems.Add(new OrderItem
+                {
+                    ProductId = item.ProductId,
+                    ProductName = product?.Name ?? "Producto desconocido",
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice
+                });
+            }
+
+            // Crear la orden
+            var order = new Order
+            {
+                UserId = userId,
+                CustomerEmail = email,
+                ShippingAddress = request.ShippingAddress,
+                TotalAmount = orderItems.Sum(i => i.Quantity * i.UnitPrice),
+                Status = OrderStatus.Pending,
+                Items = orderItems
+            };
+
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            // Reducir stock en el catálogo
+            foreach (var item in request.Items)
+            {
+                var stockRequest = new { Stock = item.Quantity };
+                var content = new StringContent(
+                    JsonSerializer.Serialize(stockRequest),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                await catalogClient.PostAsync(
+                    $"/api/v1/products/{item.ProductId}/reduce-stock",
+                    content
+                );
+            }
+
+            // ✅ Publicar evento usando TU estructura
+            await _publishEndpoint.Publish(new OrderCreatedEvent(
+                order.Id,
+                userId,
+                email,
+                order.TotalAmount,
+                order.CreatedAt
+            ));
+
+            // Mapear respuesta
+            var response = new OrderResponse(
+                order.Id,
+                order.UserId,
+                order.CustomerEmail,
+                order.CreatedAt,
+                order.TotalAmount,
+                order.Status.ToString(),
+                order.ShippingAddress,
+                order.Items.Select(i => new OrderItemResponseDto(
+                    i.ProductId,
+                    i.ProductName,
+                    i.Quantity,
+                    i.UnitPrice
+                )).ToList()
             );
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                return ServiceResult<OrderResponse>.Failure($"Stock insuficiente: {content}");
-            }
+            return ServiceResult<OrderResponse>.Success(response);
         }
-
-        // B. Guardar
-        var order = new Order
+        catch (Exception ex)
         {
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            Status = OrderStatus.Confirmed,
-            CustomerEmail = userEmail,
-            Items = request.Items.Select(i => new OrderItem
-            {
-                ProductId = i.ProductId,
-                ProductName = i.ProductName,
-                Quantity = i.Quantity,
-                UnitPrice = i.UnitPrice
-            }).ToList()
-        };
-
-        order.TotalAmount = order.Items.Sum(i => i.Quantity * i.UnitPrice);
-
-        db.Orders.Add(order);
-        await db.SaveChangesAsync();
-
-        // C. Evento
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await publishEndpoint.Publish(new OrderCreatedEvent(
-                    order.Id,
-                    userId,
-                    userEmail,
-                    order.TotalAmount,
-                    order.CreatedAt
-                ));
-            }
-            catch { }
-        });
-
-        return ServiceResult<OrderResponse>.Success(MapToResponse(order));
+            return ServiceResult<OrderResponse>.Failure($"Error creando pedido: {ex.Message}");
+        }
     }
 
-    // 2. ENVIAR PEDIDO
-    public async Task<ServiceResult> ShipOrderAsync(int orderId)
+    public async Task<ServiceResult<List<OrderResponse>>> GetMyOrdersAsync(string userId)
     {
-        var order = await db.Orders.FindAsync(orderId);
-        if (order is null) return ServiceResult.Failure("Pedido no encontrado");
-
-        if (order.Status != OrderStatus.Confirmed && order.Status != OrderStatus.Pending)
-            return ServiceResult.Failure("Solo se envían pedidos confirmados o pendientes");
-
-        order.Status = OrderStatus.Shipped;
-        await db.SaveChangesAsync();
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await publishEndpoint.Publish(new OrderShippedEvent(
-                    order.Id,
-                    order.CustomerEmail ?? "sin-email@littleshop.local",
-                    "ENVIO-12345"
-                ));
-            }
-            catch { }
-        });
-
-        return ServiceResult.Success();
-    }
-
-    // 3. CANCELAR (Usuario)
-    public async Task<ServiceResult> CancelOrderAsync(int orderId, string userId)
-    {
-        var order = await db.Orders
-            .Include(o => o.Items)
-            .FirstOrDefaultAsync(o => o.Id == orderId);
-
-        if (order is null) return ServiceResult.Failure("Pedido no encontrado");
-        if (order.UserId != userId) return ServiceResult.Failure("No tienes permiso");
-        if (order.Status == OrderStatus.Cancelled) return ServiceResult.Failure("Ya estaba cancelado");
-
-        order.Status = OrderStatus.Cancelled;
-        await db.SaveChangesAsync();
-
-        var itemsToRestore = order.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await publishEndpoint.Publish(new OrderCancelledEvent(
-                    order.Id,
-                    order.CustomerEmail,
-                    "Cancelado por el Usuario",
-                    itemsToRestore
-                ));
-            }
-            catch { }
-        });
-
-        return ServiceResult.Success();
-    }
-
-    // 4. CANCELAR (Admin)
-    public async Task<ServiceResult> CancelOrderAdminAsync(int orderId)
-    {
-        var order = await db.Orders
-            .Include(o => o.Items)
-            .FirstOrDefaultAsync(o => o.Id == orderId);
-
-        if (order is null) return ServiceResult.Failure("Pedido no encontrado");
-        if (order.Status == OrderStatus.Cancelled) return ServiceResult.Failure("Ya estaba cancelado");
-
-        order.Status = OrderStatus.Cancelled;
-        await db.SaveChangesAsync();
-
-        var itemsToRestore = order.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
-
-        _ = Task.Run(async () =>
-        {
-            await publishEndpoint.Publish(new OrderCancelledEvent(
-                order.Id,
-                order.CustomerEmail,
-                "Cancelado por el Admin",
-                itemsToRestore
-            ));
-        });
-
-        return ServiceResult.Success();
-    }
-
-    // 5. GET MIS PEDIDOS
-    public async Task<ServiceResult<IEnumerable<OrderResponse>>> GetMyOrdersAsync(string userId)
-    {
-        var orders = await db.Orders
+        var orders = await _context.Orders
             .Include(o => o.Items)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
-        return ServiceResult<IEnumerable<OrderResponse>>.Success(orders.Select(MapToResponse));
+        var response = orders.Select(o => new OrderResponse(
+            o.Id,
+            o.UserId,
+            o.CustomerEmail,
+            o.CreatedAt,
+            o.TotalAmount,
+            o.Status.ToString(),
+            o.ShippingAddress,
+            o.Items.Select(i => new OrderItemResponseDto(
+                i.ProductId,
+                i.ProductName,
+                i.Quantity,
+                i.UnitPrice
+            )).ToList()
+        )).ToList();
+
+        return ServiceResult<List<OrderResponse>>.Success(response);
     }
 
-    // 6. GET TODOS (ADMIN) - PAGINADO
     public async Task<ServiceResult<PagedResponse<OrderResponse>>> GetAllOrdersAdminAsync(int page, int pageSize)
     {
-        if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 10;
+        var totalCount = await _context.Orders.CountAsync();
 
-        var query = db.Orders.AsQueryable();
-
-        // Contamos total real
-        var totalCount = await query.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-        // Obtenemos página
-        var orders = await query
+        var orders = await _context.Orders
             .Include(o => o.Items)
-            .OrderByDescending(o => o.Id) // Importante: orden estable
+            .OrderByDescending(o => o.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
 
-        // Mapeamos
-        var mappedOrders = orders.Select(MapToResponse).ToList();
+        var items = orders.Select(o => new OrderResponse(
+            o.Id,
+            o.UserId,
+            o.CustomerEmail,
+            o.CreatedAt,
+            o.TotalAmount,
+            o.Status.ToString(),
+            o.ShippingAddress,
+            o.Items.Select(i => new OrderItemResponseDto(
+                i.ProductId,
+                i.ProductName,
+                i.Quantity,
+                i.UnitPrice
+            )).ToList()
+        )).ToList();
 
         var response = new PagedResponse<OrderResponse>(
-            mappedOrders,
+            items,
             totalCount,
             page,
             pageSize,
-            totalPages
+            (int)Math.Ceiling(totalCount / (double)pageSize)
         );
 
         return ServiceResult<PagedResponse<OrderResponse>>.Success(response);
     }
 
-    private static OrderResponse MapToResponse(Order order)
+    public async Task<ServiceResult<bool>> CancelOrderAsync(int orderId, string userId)
     {
-        var items = order.Items.Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.Quantity, i.UnitPrice)).ToList();
+        var order = await _context.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
 
-        return new OrderResponse(
-            order.Id,
-            order.UserId,
-            order.CreatedAt,
-            order.TotalAmount,
-            order.Status.ToString(),
-            items
+        if (order == null)
+            return ServiceResult<bool>.Failure("Pedido no encontrado.");
+
+        if (order.Status != OrderStatus.Pending)
+            return ServiceResult<bool>.Failure("Solo se pueden cancelar pedidos pendientes.");
+
+        order.Status = OrderStatus.Cancelled;
+        await _context.SaveChangesAsync();
+
+        // ✅ Publicar evento usando TU estructura
+        var itemsToRestore = order.Items.ToDictionary(
+            i => i.ProductId,
+            i => i.Quantity
         );
+
+        await _publishEndpoint.Publish(new OrderCancelledEvent(
+            order.Id,
+            order.CustomerEmail,
+            "Cancelado por el usuario",
+            itemsToRestore
+        ));
+
+        return ServiceResult<bool>.Success(true);
     }
 }
+
+// DTO auxiliar para deserializar producto del catálogo
+internal record ProductDto(int Id, string Name, decimal Price);
