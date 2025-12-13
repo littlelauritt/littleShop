@@ -17,7 +17,7 @@ public class OrderCreatedConsumer(IEmailService emailService, ILogger<OrderCreat
         var body = $@"
             <h3>¡Gracias por tu compra!</h3>
             <p>Hemos recibido tu pedido correctamente.</p>
-            <p><strong>Importe Total:</strong> {msg.TotalAmount:C} €</p>
+            <p><strong>Importe Total:</strong> {msg.TotalAmount:C} </p>
             <p>Fecha: {msg.CreatedAt.ToLocalTime()}</p>
             <br>
             <p>Te avisaremos cuando salga de nuestro almacén.</p>

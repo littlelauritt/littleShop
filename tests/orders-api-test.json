@@ -14,7 +14,6 @@
           "script": {
             "exec": [
               "var jsonData = pm.response.json();",
-              "// Guardamos el token en una variable global para usarla luego",
               "pm.environment.set(\"auth_token\", jsonData.token);",
               "pm.test(\"Token recibido\", function () { pm.expect(jsonData).to.have.property('token'); });"
             ],
@@ -36,7 +35,9 @@
         },
         "url": {
           "raw": "http://localhost:5001/api/Account/login",
-          "host": [ "http://localhost:5001" ],
+          "protocol": "http",
+          "host": [ "localhost" ],
+          "port": "5001",
           "path": [ "api", "Account", "login" ]
         }
       }

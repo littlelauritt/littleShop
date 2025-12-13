@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "catalog-integration",
     "name": "Catalog API Integration",
-    "description": "Tests para Catálogo: Crear, Listar y Modificar productos",
+    "description": "Tests para Catï¿½logo: Crear, Listar y Modificar productos",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
