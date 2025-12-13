@@ -70,37 +70,53 @@ jobs:
     - name: Run Integration Tests (Docker Compose)
       run: |
         export ORDERS_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
-    
+
         docker compose up -d --build
-    
-        echo "⏳ Esperando 60 segundos..."
+
+        echo "⏳ Esperando a que los servicios estén listos..."
         sleep 60
     
+        # ✅ Esperar a que catalog tenga productos
+        echo "🔍 Verificando que catalog tenga productos..."
+        max_attempts=30
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          if curl -s http://localhost:5002/api/v1/products | grep -q "Producto Test 1"; then
+            echo "✅ Catalog tiene productos!"
+            break
+          fi
+          echo "⏳ Intento $((attempt+1))/$max_attempts - Esperando a que catalog tenga productos..."
+          sleep 2
+          attempt=$((attempt+1))
+        done
+    
+        if [ $attempt -eq $max_attempts ]; then
+          echo "❌ Timeout esperando productos en catalog"
+          docker logs catalog-api
+          exit 1
+        fi
+
         echo "==== 🔍 ESTADO DE LOS CONTENEDORES ===="
         docker ps -a
-        echo "==== 📜 LOGS DE ORDERS-API (EL CULPABLE) ===="
-        docker logs orders-api || echo "No se pudieron obtener logs de orders-api"
-        echo "==================================="
     
         curl -X POST http://localhost:5001/api/Account/register \
-            -H "Content-Type: application/json" \
-            -d '{"email":"admin@test.com", "password":"Pass123$!"}'
-    
-        # 🔍 DEBUG: Probar el endpoint manualmente
+              -H "Content-Type: application/json" \
+              -d '{"email":"admin@test.com", "password":"Pass123$!"}'
+
         echo "==== 🧪 PRUEBA MANUAL DEL ENDPOINT ===="
         TOKEN=$(curl -s -X POST http://localhost:5001/api/Account/login \
-            -H "Content-Type: application/json" \
-            -d '{"email":"admin@test.com", "password":"Pass123$!"}' | jq -r '.token')
-    
+              -H "Content-Type: application/json" \
+              -d '{"email":"admin@test.com", "password":"Pass123$!"}' | jq -r '.token')
+
         echo "Token obtenido: ${TOKEN:0:20}..."
-    
+
         curl -v -X POST http://localhost:5003/api/v1/orders \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $TOKEN" \
-            -d '{"items": [{"productId": 1, "quantity": 2, "unitPrice": 10.0}], "shippingAddress": "Calle Falsa 123"}'
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $TOKEN" \
+              -d '{"items": [{"productId": 1, "quantity": 2, "unitPrice": 10.0}], "shippingAddress": "Calle Falsa 123"}'
         echo "==== FIN DEBUG ===="
-    
+
         npm install -g newman
         newman run ./tests/orders-api-test.json --env-var baseUrl=http://localhost:5003
-    
+
         docker compose down
