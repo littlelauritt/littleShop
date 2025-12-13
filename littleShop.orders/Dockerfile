@@ -1,29 +1,37 @@
-# Consulte https://aka.ms/customizecontainer para aprender a personalizar su contenedor de depuración y cómo Visual Studio usa este Dockerfile para compilar sus imágenes para una depuración más rápida.
-
-# Esta fase se usa cuando se ejecuta desde VS en modo rápido (valor predeterminado para la configuración de depuración)
+# 1. Usamos la imagen de .NET 10 Preview
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-USER $APP_UID
+USER app
 WORKDIR /app
 EXPOSE 8080
 
-
-# Esta fase se usa para compilar el proyecto de servicio
+# 2. Fase de compilación
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
+# 3. COPIAMOS EL GESTOR DE PAQUETES
 COPY ["Directory.Packages.props", "."]
+
+# 4. COPIAMOS LOS PROYECTOS (¡AQUÍ TAMBIÉN FALTABAN!)
 COPY ["littleShop.orders/littleShop.orders.csproj", "littleShop.orders/"]
+# ⭐⭐⭐ AÑADIDO: Dependencias necesarias
+COPY ["littleShop.Shared/littleShop.Shared.csproj", "littleShop.Shared/"]
+COPY ["littleshop.serviceDefaults/littleshop.serviceDefaults.csproj", "littleshop.serviceDefaults/"]
+
+# 5. Restauramos dependencias
 RUN dotnet restore "./littleShop.orders/littleShop.orders.csproj"
+
+# 6. Copiamos el resto del código
 COPY . .
 WORKDIR "/src/littleShop.orders"
 RUN dotnet build "./littleShop.orders.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Esta fase se usa para publicar el proyecto de servicio que se copiará en la fase final.
+# 7. Publicamos
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./littleShop.orders.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Esta fase se usa en producción o cuando se ejecuta desde VS en modo normal (valor predeterminado cuando no se usa la configuración de depuración)
+# 8. Imagen final
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
