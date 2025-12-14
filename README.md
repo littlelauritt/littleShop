@@ -451,14 +451,6 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 ---
 
-## 🙏 Agradecimientos
-
-- Equipo de .NET por .NET Aspire
-- Comunidad de React y TypeScript
-- Todos los contribuidores de las librerías open source utilizadas
-
----
-
 **⭐ Si este proyecto te resulta útil, considera darle una estrella en GitHub ⭐**
 
 Hecho con ❤️ por littlelauritt
