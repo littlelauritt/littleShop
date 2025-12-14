@@ -82,3 +82,4 @@ jobs:
         newman run ./tests/catalog-api-test.json --env-var baseUrl=http://localhost:5002
         
         docker compose down
+

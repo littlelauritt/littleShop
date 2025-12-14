@@ -8,6 +8,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
+COPY ["Directory.Packages.props", "."]
+
 # 1. COPIAR LOS CSPROJ (¡Aquí faltaba el serviceDefaults!)
 COPY ["littleShop.notifications/littleShop.notifications.csproj", "littleShop.notifications/"]
 COPY ["littleShop.Shared/littleShop.Shared.csproj", "littleShop.Shared/"]

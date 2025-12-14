@@ -106,3 +106,4 @@ jobs:
         npm install -g newman
         newman run ./tests/orders-api-test.json --env-var baseUrl=http://localhost:5003
         docker compose down
+

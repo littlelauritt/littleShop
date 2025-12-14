@@ -72,3 +72,4 @@ jobs:
         newman run ./tests/identity-api-test.json --env-var baseUrl=http://localhost:5001
         
         docker compose down
+
