@@ -8,17 +8,50 @@ namespace littleShop.catalog.Services;
 
 public class ProductService(CatalogDbContext db)
 {
-    public async Task<ServiceResult<PagedResponse<ProductResponse>>> GetAllAsync(int page = 1, int pageSize = 10)
+    // ✅ CAMBIO AQUÍ: Añadido parámetro 'sort' opcional
+    public async Task<ServiceResult<PagedResponse<ProductResponse>>> GetAllAsync(int page = 1, int pageSize = 10, string? sort = null)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 50) pageSize = 50;
 
-        var totalCount = await db.Products.CountAsync();
+        // 1. Empezamos la consulta
+        var query = db.Products.AsQueryable();
+
+        // 2. APLICAMOS EL ORDEN (Lógica nueva)
+        if (!string.IsNullOrWhiteSpace(sort))
+        {
+            switch (sort.ToLower())
+            {
+                case "price-asc":
+                    query = query.OrderBy(p => p.Price);
+                    break;
+                case "price-desc":
+                    query = query.OrderByDescending(p => p.Price);
+                    break;
+                case "name-asc":
+                    query = query.OrderBy(p => p.Name);
+                    break;
+                case "name-desc":
+                    query = query.OrderByDescending(p => p.Name);
+                    break;
+                default:
+                    query = query.OrderBy(p => p.Id); // Default
+                    break;
+            }
+        }
+        else
+        {
+            // Orden por defecto si no hay filtro
+            query = query.OrderBy(p => p.Id);
+        }
+
+        // 3. Contamos totales
+        var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        var products = await db.Products
-            .OrderBy(p => p.Id)
+        // 4. Paginamos y ejecutamos
+        var products = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(p => new ProductResponse(p.Id, p.Name, p.Description, p.Price, p.Stock, p.ImageUrl))
@@ -39,7 +72,7 @@ public class ProductService(CatalogDbContext db)
             Description = request.Description,
             Price = request.Price,
             Stock = request.Stock,
-            ImageUrl = request.ImageUrl 
+            ImageUrl = request.ImageUrl
         };
 
         db.Products.Add(product);
@@ -69,7 +102,7 @@ public class ProductService(CatalogDbContext db)
         product.Description = request.Description;
         product.Price = request.Price;
         product.Stock = request.Stock;
-        product.ImageUrl = request.ImageUrl; 
+        product.ImageUrl = request.ImageUrl;
 
         await db.SaveChangesAsync();
 

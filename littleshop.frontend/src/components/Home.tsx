@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Form } from 'react-bootstrap';
 import { useCart } from '../context/CartContext';
 import { Product } from '../types';
 
@@ -15,24 +15,40 @@ const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 
 export default function Home() {
     const [products, setProducts] = useState<Product[]>([]);
+
+    // Estados
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const pageSize = 8;
+    const [sortOrder, setSortOrder] = useState(''); // ✅ Estado del filtro
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
     const { addToCart } = useCart();
 
-    useEffect(() => { fetchProducts(currentPage); }, [currentPage]);
+    // ✅ Efecto: Se dispara al cambiar página O cambiar filtro
+    useEffect(() => {
+        fetchProducts(currentPage, sortOrder);
+    }, [currentPage, sortOrder]);
 
-    const fetchProducts = async (page: number) => {
+    const fetchProducts = async (page: number, sort: string) => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch(`${GATEWAY_URL}/api/v1/products?page=${page}&pageSize=${pageSize}`);
+            // ✅ Mandamos el parámetro sort al backend
+            let url = `${GATEWAY_URL}/api/v1/products?page=${page}&pageSize=${pageSize}`;
+            if (sort) {
+                url += `&sort=${sort}`;
+            }
+
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Error al cargar productos');
+
             const data: PagedResponse = await response.json();
             setProducts(data.items);
             setTotalPages(data.totalPages);
+
         } catch (err) {
             setError('No se pudieron cargar los productos. Por favor, intenta más tarde.');
             console.error(err);
@@ -59,8 +75,29 @@ export default function Home() {
 
     return (
         <Container>
-            <div className="d-flex justify-content-end align-items-center mb-4 mt-3">
-                <span className="text-muted small me-3">
+            {/* Barra superior de controles */}
+            <div className="d-flex justify-content-between align-items-center mb-4 mt-3">
+
+                {/* ✅ Selector de filtros */}
+                <div style={{ minWidth: '220px' }}>
+                    <Form.Select
+                        value={sortOrder}
+                        onChange={(e) => {
+                            setSortOrder(e.target.value);
+                            setCurrentPage(1); // Reset a pág 1 al filtrar
+                        }}
+                        className="shadow-sm border-0 bg-white text-secondary"
+                        style={{ cursor: 'pointer', borderRadius: '12px' }}
+                    >
+                        <option value="">Ordenar por...</option>
+                        <option value="price-asc">💰 Precio: Menor a Mayor</option>
+                        <option value="price-desc">💰 Precio: Mayor a Menor</option>
+                        <option value="name-asc">🔤 Nombre: A - Z</option>
+                        <option value="name-desc">🔤 Nombre: Z - A</option>
+                    </Form.Select>
+                </div>
+
+                <span className="text-muted small">
                     Página {currentPage} de {totalPages}
                 </span>
             </div>
@@ -73,17 +110,15 @@ export default function Home() {
                 <Row>
                     {products.map((product) => (
                         <Col key={product.id} md={6} lg={4} xl={3} className="mb-4">
-                            {/* ✅ CAMBIO: overflow-hidden y border-0 para que la imagen respete los bordes redondos */}
+                            {/* Card arreglada visualmente */}
                             <Card className="h-100 shadow-sm border-0 overflow-hidden">
-
-                                {/* Contenedor de imagen limpio */}
                                 <div style={{
                                     height: '220px',
                                     padding: '20px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    backgroundColor: '#fff', // Fondo blanco para que la imagen (si es PNG transparente) se vea bien
+                                    backgroundColor: '#fff',
                                     position: 'relative'
                                 }}>
                                     {product.imageUrl ? (

@@ -49,17 +49,13 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// =========================================================
-// 5. MIGRACIONES AUTOMÁTICAS (Sin datos de prueba)
-// =========================================================
+// 5. MIGRACIONES AUTOMÁTICAS
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-
         await db.Database.MigrateAsync();
-
         Console.WriteLine("✅ Base de datos de Catálogo actualizada correctamente.");
     }
     catch (Exception ex)
@@ -77,16 +73,18 @@ app.MapScalarApiReference(options =>
     options.WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
 });
 
-
-// =========================================================
 // DEFINICIÓN DE ENDPOINTS
-// =========================================================
 
 var api = app.MapGroup("/api/v1/products").WithTags("Products");
 
-api.MapGet("/", async (int? page, int? pageSize, ProductService service) =>
+api.MapGet("/", async (
+    int? page,
+    int? pageSize,
+    string? sort, 
+    ProductService service) =>
 {
-    var result = await service.GetAllAsync(page ?? 1, pageSize ?? 10);
+    var result = await service.GetAllAsync(page ?? 1, pageSize ?? 10, sort);
+
     return Results.Ok(result.Data);
 });
 
