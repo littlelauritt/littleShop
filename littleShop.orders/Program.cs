@@ -144,10 +144,25 @@ api.MapPost("/", async (CreateOrderRequest request, OrderService service, Claims
     return Results.Created($"/api/v1/orders/{result.Data!.Id}", result.Data);
 });
 
-// Admin endpoints
-var adminApi = api.MapGroup("/admin");
+// ✅ NUEVO: Usuario solicita cancelación
+api.MapPost("/{id:int}/request-cancellation", async (
+    int id,
+    RequestCancellationDto dto,
+    OrderService service,
+    ClaimsPrincipal user) =>
+{
+    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (userId == null) return Results.Unauthorized();
 
-// 1. Listar todos (YA LO TENÍAS)
+    var result = await service.RequestCancellationAsync(id, userId, dto.Reason);
+    return result.Succeeded
+        ? Results.Ok(new { message = "Solicitud de cancelación enviada al administrador" })
+        : Results.BadRequest(new { errors = result.Errors });
+});
+
+// Admin endpoints
+var adminApi = api.MapGroup("/admin").RequireAuthorization();
+
 adminApi.MapGet("/", async (int? page, int? pageSize, OrderService service, ClaimsPrincipal user) =>
 {
     if (!user.IsInRole("Admin")) return Results.Forbid();
@@ -155,26 +170,25 @@ adminApi.MapGet("/", async (int? page, int? pageSize, OrderService service, Clai
     return Results.Ok(result.Data);
 });
 
-// 2. ENVIAR PEDIDO (ESTE FALTABA) 🚚
-adminApi.MapPost("/{id}/ship", async (int id, OrderService service, ClaimsPrincipal user) =>
+// ✅ NUEVO: Admin cancela pedido
+adminApi.MapPost("/{id:int}/cancel", async (int id, OrderService service, ClaimsPrincipal user) =>
+{
+    if (!user.IsInRole("Admin")) return Results.Forbid();
+
+    var result = await service.CancelOrderAdminAsync(id);
+    return result.Succeeded
+        ? Results.Ok(new { message = "Pedido cancelado correctamente" })
+        : Results.BadRequest(new { errors = result.Errors });
+});
+
+adminApi.MapPost("/{id:int}/ship", async (int id, OrderService service, ClaimsPrincipal user) =>
 {
     if (!user.IsInRole("Admin")) return Results.Forbid();
 
     var success = await service.ShipOrderAsync(id);
-
-    if (!success) return Results.BadRequest("No se pudo enviar el pedido (quizás no existe o ya está enviado).");
-    return Results.NoContent();
-});
-
-// 3. CANCELAR PEDIDO ADMIN (ESTE FALTABA) ❌
-adminApi.MapPost("/{id}/cancel", async (int id, OrderService service, ClaimsPrincipal user) =>
-{
-    if (!user.IsInRole("Admin")) return Results.Forbid();
-
-    var success = await service.CancelOrderAdminAsync(id);
-
-    if (!success) return Results.BadRequest("No se pudo cancelar el pedido.");
-    return Results.NoContent();
+    return success
+        ? Results.Ok(new { message = "Pedido marcado como ENVIADO" })
+        : Results.BadRequest(new { message = "No se pudo enviar el pedido (verifica que exista y no esté cancelado)" });
 });
 
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));

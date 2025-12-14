@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 // Estilos de Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './index.css';
 import { BrowserRouter } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 

@@ -21,10 +21,13 @@ public record OrderResponse(
     string UserId,
     string CustomerEmail,
     DateTime CreatedAt,
-    decimal TotalAmount,
+    decimal Total,
     string Status,
     string ShippingAddress,
-    List<OrderItemResponseDto> Items
+    List<OrderItemResponseDto> Items,
+    bool CancellationRequested = false,           // ✅ NUEVO
+    DateTime? CancellationRequestedAt = null,     // ✅ NUEVO
+    string? CancellationReason = null             // ✅ NUEVO
 );
 
 // ✅ DTO para items en la response (CON ProductName)
@@ -43,3 +46,5 @@ public record PagedResponse<T>(
     int PageSize,
     int TotalPages
 );
+
+public record RequestCancellationDto(string Reason);

@@ -1,15 +1,17 @@
 ﻿import { useState } from "react";
 import type { FormEvent } from "react";
 import { registerUser } from "../assets/api";
-// Se ha eliminado useNavigate y react-router-dom porque no se usaban y daban error
+import { Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterForm() {
     const [regEmail, setRegEmail] = useState('');
     const [regPassword, setRegPassword] = useState('');
     const [regMessage, setRegMessage] = useState('');
     const [regLoading, setRegLoading] = useState(false);
-    
-    // Validaciones (sin cambios)
+    const navigate = useNavigate();
+
+    // ✅ RECUPERADO: Reglas de validación
     const passwordValidations = [
         { label: 'Mínimo 8 caracteres', test: (pwd: string) => pwd.length >= 8 },
         { label: 'Al menos una mayúscula', test: (pwd: string) => /[A-Z]/.test(pwd) },
@@ -24,61 +26,85 @@ export default function RegisterForm() {
         setRegLoading(true);
 
         try {
-            // Llamada a tu API local
             await registerUser({ email: regEmail, password: regPassword });
-
             setRegLoading(false);
-            setRegMessage('¡Cuenta creada! ✉️ Hemos enviado un email de confirmación. Debes validarlo para entrar.');
+            setRegMessage('¡Cuenta creada con éxito! Revisa tu email para confirmarla.');
             setRegEmail('');
             setRegPassword('');
-            
         } catch (error) {
             setRegLoading(false);
-            setRegMessage((error as Error).message || 'Error de conexión.');
+            setRegMessage((error as Error).message || 'Error al registrar la cuenta.');
         }
     };
 
     return (
-        <form onSubmit={handleRegister}>
-            <div className="mb-3">
-                <label htmlFor="regEmail" className="form-label">Email</label>
-                <input
-                    id="regEmail"
-                    type="email"
-                    value={regEmail}
-                    onChange={e => setRegEmail(e.target.value)}
-                    className="form-control"
-                    placeholder="Introduce tu correo"
-                    required
-                />
-            </div>
-            <div className="mb-3">
-                <label htmlFor="regPassword" className="form-label">Contraseña</label>
-                <input
-                    id="regPassword"
-                    type="password"
-                    value={regPassword}
-                    onChange={e => setRegPassword(e.target.value)}
-                    className="form-control"
-                    placeholder="Mín. 8 caracteres, mayúscula, número, símbolo"
-                    required
-                />
-                <ul className="password-requirements mt-2 mb-0" style={{ fontSize: '0.85rem' }}>
-                    {passwordValidations.map((v, idx) => (
-                        <li key={idx} style={{ color: v.test(regPassword) ? 'green' : 'red' }}>
-                            {v.label}
-                        </li>
-                    ))}
-                </ul>
-            </div>
-            <button type="submit" disabled={regLoading} className="btn btn-primary w-100">
-                {regLoading ? 'Registrando...' : 'Registrar Cuenta'}
-            </button>
-            {regMessage && (
-                <div className={`alert mt-3 ${regMessage.includes('creada') ? 'alert-success' : 'alert-danger'}`} role="alert">
-                    {regMessage}
-                </div>
-            )}
-        </form>
+        <Card className="shadow border-0 p-4 mx-auto" style={{ maxWidth: '450px', borderRadius: '20px' }}>
+            <Card.Body>
+                <h2 className="text-center mb-4" style={{ color: '#4CC9F0' }}>Crear Cuenta</h2>
+
+                <Form onSubmit={handleRegister}>
+                    <Form.Group className="mb-3">
+                        <Form.Label className="text-muted small">Correo Electrónico</Form.Label>
+                        <Form.Control
+                            type="email"
+                            placeholder="tu@email.com"
+                            value={regEmail}
+                            onChange={e => setRegEmail(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3">
+                        <Form.Label className="text-muted small">Contraseña</Form.Label>
+                        <Form.Control
+                            type="password"
+                            placeholder="Crea una contraseña segura"
+                            value={regPassword}
+                            onChange={e => setRegPassword(e.target.value)}
+                            required
+                        />
+
+                        {/* ✅ RECUPERADO: Lista visual de validaciones */}
+                        <div className="mt-2 p-2 bg-light rounded border border-0">
+                            {passwordValidations.map((v, idx) => {
+                                const isValid = v.test(regPassword);
+                                return (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            fontSize: '0.75rem',
+                                            color: isValid ? '#2ecc71' : '#adb5bd', // Verde si cumple, Gris si no
+                                            marginBottom: '2px',
+                                            transition: 'color 0.3s ease'
+                                        }}
+                                    >
+                                        <span style={{ marginRight: '5px' }}>
+                                            {isValid ? '✔' : '•'}
+                                        </span>
+                                        {v.label}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </Form.Group>
+
+                    <Button variant="primary" type="submit" className="w-100 mt-2 py-2" disabled={regLoading}>
+                        {regLoading ? <Spinner animation="border" size="sm" /> : 'Registrar Cuenta'}
+                    </Button>
+
+                    {regMessage && (
+                        <Alert variant={regMessage.includes('creada') ? 'success' : 'danger'} className="mt-3 py-2 small text-center">
+                            {regMessage}
+                        </Alert>
+                    )}
+
+                    <div className="text-center mt-3">
+                        <Button variant="link" className="text-decoration-none text-muted small" onClick={() => navigate('/login')}>
+                            ¿Ya tienes cuenta? Inicia sesión
+                        </Button>
+                    </div>
+                </Form>
+            </Card.Body>
+        </Card>
     );
 }

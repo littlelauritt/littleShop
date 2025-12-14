@@ -60,7 +60,8 @@ var ordersService = builder.AddProject<Projects.littleShop_orders>("littleshop-o
 builder.AddProject<Projects.littleShop_notifications>("littleshop-notifications")
     .WithReference(rabbit).WaitFor(rabbit)
     .WithEnvironment("SMTP_HOST", maildev.GetEndpoint("smtp"))
-    .WithEnvironment("FRONTEND_URL", frontendApp.GetEndpoint("frontend-http"));
+    .WithEnvironment("FRONTEND_URL", frontendApp.GetEndpoint("frontend-http"))
+    .WithEnvironment("AdminEmail", "admin@littleshop.com");
 
 // --- 5. Gateway ---
 var apiGateway = builder.AddProject<Projects.littleshop_apiGateway>("littleshop-apigateway")

@@ -1,4 +1,4 @@
-import { authenticatedFetch } from "../assets/api";
+ï»¿import { authenticatedFetch } from "../assets/api";
 
 // DTOs
 export interface OrderItemDto {
@@ -8,7 +8,6 @@ export interface OrderItemDto {
     unitPrice: number;
 }
 
-// CORRECCIÓN 1: Añadimos shippingAddress a la interfaz
 export interface CreateOrderRequest {
     items: OrderItemDto[];
     shippingAddress: string;
@@ -26,15 +25,11 @@ export interface OrderResponse {
 
 // --- FUNCIONES CLIENTE ---
 
-// CORRECCIÓN 2: Modificamos la función para incluir la dirección
-// Por ahora ponemos una dirección por defecto ("Calle Falsa 123") para que funcione ya.
-// En el futuro, puedes pasarla como parámetro si tienes un formulario para ello.
 export async function createOrder(items: OrderItemDto[]): Promise<OrderResponse> {
     const body: CreateOrderRequest = {
         items,
-        shippingAddress: "Calle Principal 1, Madrid" // <--- ¡AQUÍ ESTABA EL PROBLEMA!
+        shippingAddress: "Calle Principal 1, Madrid"
     };
-
     return await authenticatedFetch<OrderResponse>('/api/v1/orders', 'POST', body);
 }
 
@@ -42,8 +37,12 @@ export async function getMyOrders(): Promise<OrderResponse[]> {
     return await authenticatedFetch<OrderResponse[]>('/api/v1/orders', 'GET');
 }
 
-export async function cancelOrder(orderId: number): Promise<void> {
-    return await authenticatedFetch(`/api/v1/orders/${orderId}/cancel`, 'POST');
+// âœ… NUEVO: Usuario solicita cancelaciÃ³n (NO cancela directamente)
+export async function requestCancellation(orderId: number, reason: string): Promise<void> {    return await authenticatedFetch<void>(
+        `/api/v1/orders/${orderId}/request-cancellation`,
+        'POST',
+        { reason }
+    );
 }
 
 // --- FUNCIONES ADMIN ---
@@ -53,9 +52,10 @@ export async function getAllOrdersAdmin(): Promise<OrderResponse[]> {
 }
 
 export async function shipOrderAdmin(orderId: number): Promise<void> {
-    return await authenticatedFetch(`/api/v1/orders/admin/${orderId}/ship`, 'POST');
+    return await authenticatedFetch<void>(`/api/v1/orders/admin/${orderId}/ship`, 'POST');
 }
 
+// âœ… CORREGIDO: Admin cancela pedido directamente
 export async function cancelOrderAdmin(orderId: number): Promise<void> {
-    await authenticatedFetch(`/api/v1/orders/admin/${orderId}/cancel`, 'POST');
+    return await authenticatedFetch<void>(`/api/v1/orders/admin/${orderId}/cancel`, 'POST');
 }

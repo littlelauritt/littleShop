@@ -1,18 +1,8 @@
 ﻿import { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert, Badge } from 'react-bootstrap';
-// Asegúrate de que esta ruta sea correcta según tu proyecto
-import { useCart } from '../context/CartContext'; 
+import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
+import { useCart } from '../context/CartContext';
+import { Product } from '../types';
 
-// Definimos la interfaz del Producto
-interface Product {
-    id: number;
-    name: string;
-    description: string;
-    price: number;
-    stock: number;
-}
-
-// Definimos la interfaz de la respuesta paginada
 interface PagedResponse {
     items: Product[];
     totalCount: number;
@@ -24,15 +14,14 @@ interface PagedResponse {
 const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 
 export default function Home() {
-    // Estado para los productos
     const [products, setProducts] = useState<Product[]>([]);
-    
-    // Estados para paginación
+
+    // Estados de paginación
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
-    const pageSize = 8; // Puedes cambiar esto a 10, 20, etc.
+    const pageSize = 8;
 
-    // Estados de UI
+    // Estados de carga
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -46,21 +35,16 @@ export default function Home() {
         setLoading(true);
         setError('');
         try {
-            // Llamamos al endpoint paginado pasando page y pageSize
             const response = await fetch(`${GATEWAY_URL}/api/v1/products?page=${page}&pageSize=${pageSize}`);
-            
+
             if (!response.ok) throw new Error('Error al cargar productos');
 
             const data: PagedResponse = await response.json();
-
-            // AQUÍ ESTÁ EL CAMBIO CLAVE:
-            // Antes hacías: setProducts(data)
-            // Ahora hacemos: setProducts(data.items)
             setProducts(data.items);
             setTotalPages(data.totalPages);
 
         } catch (err) {
-            setError('No se pudieron cargar los productos. Intenta refrescar.');
+            setError('No se pudieron cargar los productos. Por favor, intenta más tarde.');
             console.error(err);
         } finally {
             setLoading(false);
@@ -76,55 +60,80 @@ export default function Home() {
     };
 
     if (loading) return (
-        <div className="text-center mt-5">
+        <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
             <Spinner animation="border" variant="primary" />
-            <p className="mt-2 text-muted">Cargando catálogo...</p>
+            <p className="mt-3 text-muted">Cargando catálogo...</p>
         </div>
     );
 
-    if (error) return <Alert variant="danger" className="mt-4">{error}</Alert>;
+    if (error) return (
+        <Container className="mt-5">
+            <Alert variant="danger">{error}</Alert>
+        </Container>
+    );
 
     return (
         <Container>
-            <div className="d-flex justify-content-between align-items-center mb-4 mt-2">
-                <h1>Catálogo</h1>
-                <Badge bg="secondary">Página {currentPage} de {totalPages}</Badge>
+            {/* Paginación discreta alineada a la derecha */}
+            <div className="d-flex justify-content-end align-items-center mb-4 mt-3">
+                <span className="text-muted small me-3">
+                    Página {currentPage} de {totalPages}
+                </span>
             </div>
 
             {products.length === 0 ? (
-                <Alert variant="info">No hay productos disponibles.</Alert>
+                <Alert variant="info" className="text-center">
+                    No hay productos disponibles en este momento.
+                </Alert>
             ) : (
                 <Row>
                     {products.map((product) => (
                         <Col key={product.id} md={6} lg={4} xl={3} className="mb-4">
-                            <Card className="h-100 shadow-sm hover-shadow transition-all">
-                                {/* Si tuvieras imágenes, irían aquí */}
-                                <div className="bg-light p-4 text-center text-muted" style={{height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                    📦
+                            <Card className="h-100 shadow-sm border-0">
+                                {/* Contenedor de imagen con altura fija */}
+                                <div style={{ height: '220px', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
+                                    {product.imageUrl ? (
+                                        <Card.Img
+                                            variant="top"
+                                            src={product.imageUrl}
+                                            alt={product.name}
+                                            style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                        />
+                                    ) : (
+                                        <div className="text-center text-muted">
+                                            <span style={{ fontSize: '3rem', opacity: 0.3 }}>📦</span>
+                                            <p className="small m-0">Sin imagen</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <Card.Body className="d-flex flex-column">
-                                    <Card.Title className="text-truncate" title={product.name}>
+
+                                <Card.Body className="d-flex flex-column pt-0">
+                                    <Card.Title className="fs-6 fw-bold text-dark mb-2 text-truncate" title={product.name}>
                                         {product.name}
                                     </Card.Title>
-                                    <Card.Text className="text-muted small flex-grow-1" style={{minHeight: '3em'}}>
-                                        {product.description?.substring(0, 60)}...
-                                    </Card.Text>
-                                    
-                                    <div className="d-flex justify-content-between align-items-center mt-3">
-                                        <h5 className="mb-0 text-primary">{product.price.toFixed(2)}€</h5>
-                                        <Badge bg={product.stock > 0 ? "success" : "danger"}>
-                                            {product.stock > 0 ? `Stock: ${product.stock}` : "Agotado"}
-                                        </Badge>
-                                    </div>
 
-                                    <Button 
-                                        variant="dark" 
-                                        className="w-100 mt-3"
-                                        disabled={product.stock === 0}
-                                        onClick={() => addToCart(product)}
-                                    >
-                                        {product.stock > 0 ? 'Añadir al Carrito' : 'Sin Stock'}
-                                    </Button>
+                                    {/* Descripción completa con salto de línea */}
+                                    <Card.Text className="text-muted small flex-grow-1" style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>
+                                        {product.description}
+                                    </Card.Text>
+
+                                    <div className="mt-3">
+                                        <div className="d-flex justify-content-between align-items-center mb-3">
+                                            <span className="fs-5 fw-bold text-primary">{product.price.toFixed(2)}€</span>
+                                            <span className={`badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'} fw-normal`}>
+                                                {product.stock > 0 ? `${product.stock} ud.` : 'Agotado'}
+                                            </span>
+                                        </div>
+
+                                        <Button
+                                            variant="primary"
+                                            className="w-100"
+                                            disabled={product.stock === 0}
+                                            onClick={() => addToCart(product)}
+                                        >
+                                            {product.stock > 0 ? 'Añadir al carrito' : 'Sin Stock'}
+                                        </Button>
+                                    </div>
                                 </Card.Body>
                             </Card>
                         </Col>
@@ -132,27 +141,26 @@ export default function Home() {
                 </Row>
             )}
 
-            {/* CONTROLES DE PAGINACIÓN */}
+            {/* Controles de Paginación */}
             {totalPages > 1 && (
-                <div className="d-flex justify-content-center gap-3 my-4">
-                    <Button 
-                        variant="outline-primary" 
-                        onClick={handlePrev} 
+                <div className="d-flex justify-content-center gap-2 my-5">
+                    <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={handlePrev}
                         disabled={currentPage === 1}
+                        className="px-3"
                     >
-                        &larr; Anterior
+                        Anterior
                     </Button>
-                    
-                    <span className="align-self-center font-weight-bold">
-                        {currentPage} / {totalPages}
-                    </span>
-
-                    <Button 
-                        variant="outline-primary" 
-                        onClick={handleNext} 
+                    <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={handleNext}
                         disabled={currentPage === totalPages}
+                        className="px-3"
                     >
-                        Siguiente &rarr;
+                        Siguiente
                     </Button>
                 </div>
             )}

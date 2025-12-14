@@ -1,4 +1,4 @@
-using littleshop.serviceDefaults;
+﻿using littleshop.serviceDefaults;
 using littleShop.notifications.Consumers;
 using littleShop.notifications.Services;
 using MassTransit;
@@ -19,9 +19,12 @@ builder.Services.AddMassTransit(x =>
     // 3. Cancelar Pedido
     x.AddConsumer<OrderCancelledConsumer>();
 
-    // 4. ENV�O DE PEDIDO (�FALTABA ESTA L�NEA!)
+    // 4. ENVÍO DE PEDIDO (¡FALTABA ESTA LÍNEA!)
     // Sin esto, el evento OrderShippedEvent se ignora.
     x.AddConsumer<OrderShippedConsumer>();
+
+    // 5. ✅ NUEVO: Solicitud de Cancelación
+    x.AddConsumer<OrderCancellationRequestedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
