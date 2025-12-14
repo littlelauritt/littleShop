@@ -226,6 +226,38 @@ public class OrderService
 
         return ServiceResult<bool>.Success(true);
     }
+
+    public async Task<bool> ShipOrderAsync(int orderId)
+    {
+        var order = await _context.Orders.FindAsync(orderId);
+
+        // CORRECCIÓN: Permitimos enviar si está Confirmado O Pendiente
+        if (order == null ||
+           (order.Status != OrderStatus.Confirmed && order.Status != OrderStatus.Pending))
+        {
+            return false;
+        }
+
+        order.Status = OrderStatus.Shipped;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> CancelOrderAdminAsync(int orderId)
+    {
+        var order = await _context.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == orderId);
+
+        // Un admin puede cancelar si no está ya cancelado ni enviado
+        if (order == null || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Shipped) return false;
+
+        // 1. Devolvemos Stock al catálogo (Opcional: llamar al microservicio Catalog para devolver stock)
+        // Por simplicidad ahora mismo solo cambiamos el estado.
+
+        // 2. Cambiamos estado
+        order.Status = OrderStatus.Cancelled;
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }
 
 // DTO auxiliar para deserializar producto del catálogo

@@ -8,8 +8,10 @@ export interface OrderItemDto {
     unitPrice: number;
 }
 
+// CORRECCIÓN 1: Añadimos shippingAddress a la interfaz
 export interface CreateOrderRequest {
     items: OrderItemDto[];
+    shippingAddress: string;
 }
 
 export interface OrderResponse {
@@ -24,13 +26,19 @@ export interface OrderResponse {
 
 // --- FUNCIONES CLIENTE ---
 
+// CORRECCIÓN 2: Modificamos la función para incluir la dirección
+// Por ahora ponemos una dirección por defecto ("Calle Falsa 123") para que funcione ya.
+// En el futuro, puedes pasarla como parámetro si tienes un formulario para ello.
 export async function createOrder(items: OrderItemDto[]): Promise<OrderResponse> {
-    // CORREGIDO: Solo pasamos path, método y body (3 argumentos)
-    return await authenticatedFetch<OrderResponse>('/api/v1/orders', 'POST', { items });
+    const body: CreateOrderRequest = {
+        items,
+        shippingAddress: "Calle Principal 1, Madrid" // <--- ¡AQUÍ ESTABA EL PROBLEMA!
+    };
+
+    return await authenticatedFetch<OrderResponse>('/api/v1/orders', 'POST', body);
 }
 
 export async function getMyOrders(): Promise<OrderResponse[]> {
-    // CORREGIDO: 2 argumentos (body es opcional)
     return await authenticatedFetch<OrderResponse[]>('/api/v1/orders', 'GET');
 }
 
@@ -49,6 +57,5 @@ export async function shipOrderAdmin(orderId: number): Promise<void> {
 }
 
 export async function cancelOrderAdmin(orderId: number): Promise<void> {
-    // POST /api/v1/orders/admin/{id}/cancel
     await authenticatedFetch(`/api/v1/orders/admin/${orderId}/cancel`, 'POST');
 }

@@ -2,18 +2,24 @@
 import { Table, Badge, Button, Spinner, Alert, Modal } from 'react-bootstrap';
 import { getMyOrders, cancelOrder, OrderResponse } from '../../services/orderService';
 
+// Extendemos la interfaz para aceptar ambos nombres por seguridad
+interface SafeOrderResponse extends OrderResponse {
+    totalAmount?: number;
+}
+
 export default function MyOrders() {
-    const [orders, setOrders] = useState<OrderResponse[]>([]);
+    const [orders, setOrders] = useState<SafeOrderResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     // --- ESTADOS PARA EL MODAL DE DETALLES ---
     const [showModal, setShowModal] = useState(false);
-    const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null);
+    const [selectedOrder, setSelectedOrder] = useState<SafeOrderResponse | null>(null);
 
     const fetchOrders = async () => {
         try {
             const data = await getMyOrders();
+            console.log("📦 Pedidos recibidos:", data); // Para depuración
             // Ordenamos por ID descendente (el más nuevo arriba)
             setOrders(data.sort((a, b) => b.id - a.id));
         } catch (err) {
@@ -37,9 +43,14 @@ export default function MyOrders() {
     };
 
     // Función para abrir el modal
-    const handleShowDetails = (order: OrderResponse) => {
+    const handleShowDetails = (order: SafeOrderResponse) => {
         setSelectedOrder(order);
         setShowModal(true);
+    };
+
+    // Helper para obtener el total de forma segura
+    const getSafeTotal = (order: SafeOrderResponse) => {
+        return (order.total !== undefined ? order.total : order.totalAmount) || 0;
     };
 
     if (loading) return <Spinner animation="border" />;
@@ -64,7 +75,8 @@ export default function MyOrders() {
                         <tr key={o.id}>
                             <td>{o.id}</td>
                             <td>{new Date(o.createdAt).toLocaleDateString()}</td>
-                            <td>{o.total.toFixed(2)} €</td>
+                            {/* AQUÍ ESTABA EL ERROR: Usamos la función segura */}
+                            <td>{getSafeTotal(o).toFixed(2)} €</td>
                             <td>
                                 <Badge bg={
                                     o.status === 'Cancelled' ? 'danger' :
@@ -134,7 +146,8 @@ export default function MyOrders() {
                                 </tbody>
                             </Table>
                             <h4 className="text-end mt-4 text-primary">
-                                Total Pagado: {selectedOrder.total.toFixed(2)} €
+                                {/* AQUÍ TAMBIÉN CORREGIDO */}
+                                Total Pagado: {getSafeTotal(selectedOrder).toFixed(2)} €
                             </h4>
                         </div>
                     ) : (
