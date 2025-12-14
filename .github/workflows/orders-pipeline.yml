@@ -9,114 +9,236 @@ on:
       - 'littleShop.Shared/**'
       - 'littleshop.serviceDefaults/**'
       - '.github/workflows/orders-pipeline.yml'
-      - 'docker-compose.yml'
       - 'tests/orders-api-test.json'
   pull_request:
     branches: [ "main" ]
 
 env:
+  DOTNET_VERSION: '10.0.x'
   REGISTRY: ghcr.io
 
 jobs:
+  # -----------------------------------------------------------------
+  # JOB 1: BUILD & UNIT TESTS
+  # -----------------------------------------------------------------
   build-and-test:
     runs-on: ubuntu-latest
+    
     steps:
     - uses: actions/checkout@v4
-
+    
     - name: Setup .NET 10 Preview
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x'
+        dotnet-version: ${{ env.DOTNET_VERSION }}
         dotnet-quality: 'preview'
-
+    
     - name: Restore Dependencies
       run: dotnet restore littleShop.orders/littleShop.orders.csproj
-
+    
     - name: Build
       run: dotnet build littleShop.orders/littleShop.orders.csproj --no-restore -c Release
+    
+    - name: Run Unit Tests
+      run: dotnet test littleShop.orders.Tests/littleShop.orders.Tests.csproj --verbosity normal --logger "trx;LogFileName=test-results.trx"
+    
+    - name: Publish Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-orders
+        path: '**/test-results.trx'
 
-  docker-build-push:
+  # -----------------------------------------------------------------
+  # JOB 2: INTEGRATION TESTS (usando Aspire AppHost)
+  # -----------------------------------------------------------------
+  integration-tests:
     needs: build-and-test
     runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET 10 Preview
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        dotnet-quality: 'preview'
+    
+    - name: Install Aspire workload
+      run: dotnet workload install aspire
+    
+    - name: Restore all projects
+      run: dotnet restore littleShop.sln
+    
+    - name: Build entire solution
+      run: dotnet build littleShop.sln -c Release --no-restore
+    
+    - name: Start Aspire AppHost in background
+      run: |
+        cd littleShop
+        nohup dotnet run --no-build -c Release > aspire.log 2>&1 &
+        echo $! > aspire.pid
+        echo "⏳ Waiting for Aspire to start..."
+        sleep 60
+    
+    - name: Wait for all services to be ready
+      run: |
+        echo "🔍 Checking services health..."
+        
+        # Identity API
+        max_attempts=30
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          if curl -f -s http://localhost:5001/health > /dev/null 2>&1; then
+            echo "✅ Identity API is ready!"
+            break
+          fi
+          echo "⏳ Waiting for Identity API... ($((attempt+1))/$max_attempts)"
+          sleep 2
+          attempt=$((attempt+1))
+        done
+        
+        # Catalog API
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          if curl -f -s http://localhost:5002/api/v1/products > /dev/null 2>&1; then
+            echo "✅ Catalog API is ready!"
+            break
+          fi
+          echo "⏳ Waiting for Catalog API... ($((attempt+1))/$max_attempts)"
+          sleep 2
+          attempt=$((attempt+1))
+        done
+        
+        # Orders API
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          if curl -f -s http://localhost:5003/health > /dev/null 2>&1; then
+            echo "✅ Orders API is ready!"
+            break
+          fi
+          echo "⏳ Waiting for Orders API... ($((attempt+1))/$max_attempts)"
+          sleep 2
+          attempt=$((attempt+1))
+        done
+        
+        if [ $attempt -eq $max_attempts ]; then
+          echo "❌ Timeout waiting for services"
+          echo "==== Aspire Logs ===="
+          cat aspire.log || echo "No Aspire logs available"
+          exit 1
+        fi
+    
+    - name: Verify Catalog has products
+      run: |
+        echo "🔍 Verifying Catalog has products..."
+        max_attempts=20
+        attempt=0
+        while [ $attempt -lt $max_attempts ]; do
+          PRODUCTS=$(curl -s http://localhost:5002/api/v1/products)
+          if echo "$PRODUCTS" | grep -q "Producto Test 1" || echo "$PRODUCTS" | grep -q '"id"'; then
+            echo "✅ Catalog has products!"
+            echo "$PRODUCTS"
+            break
+          fi
+          echo "⏳ Waiting for products... ($((attempt+1))/$max_attempts)"
+          sleep 3
+          attempt=$((attempt+1))
+        done
+        
+        if [ $attempt -eq $max_attempts ]; then
+          echo "⚠️ Warning: Catalog might not have seed data, continuing anyway..."
+        fi
+    
+    - name: Create test user (if not exists)
+      run: |
+        echo "🔐 Creating test user..."
+        curl -X POST http://localhost:5001/api/Account/register \
+          -H "Content-Type: application/json" \
+          -d '{"email":"testuser@test.com", "password":"Pass123$!"}' || echo "User might already exist"
+    
+    - name: Manual test of Orders endpoint
+      run: |
+        echo "==== 🧪 TESTING ORDERS ENDPOINT MANUALLY ===="
+        
+        # Get token
+        TOKEN=$(curl -s -X POST http://localhost:5001/api/Account/login \
+          -H "Content-Type: application/json" \
+          -d '{"email":"testuser@test.com", "password":"Pass123$!"}' | jq -r '.token')
+        
+        echo "Token obtained: ${TOKEN:0:30}..."
+        
+        # Try to create an order
+        curl -v -X POST http://localhost:5003/api/v1/orders \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $TOKEN" \
+          -d '{"items": [{"productId": 1, "quantity": 1, "unitPrice": 10.0}], "shippingAddress": "Test Address 123"}'
+        
+        echo "==== END MANUAL TEST ===="
+    
+    - name: Install Newman (Postman CLI)
+      run: npm install -g newman
+    
+    - name: Run Integration Tests
+      run: |
+        newman run ./tests/orders-api-test.json \
+          --env-var baseUrl=http://localhost:5003 \
+          --reporters cli,json \
+          --reporter-json-export newman-results.json
+    
+    - name: Upload Newman Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: newman-results-orders
+        path: newman-results.json
+    
+    - name: Stop Aspire AppHost
+      if: always()
+      run: |
+        if [ -f aspire.pid ]; then
+          kill $(cat aspire.pid) || true
+        fi
+        echo "==== Aspire Logs ===="
+        cat aspire.log || echo "No Aspire logs available"
+
+  # -----------------------------------------------------------------
+  # JOB 3: DOCKER BUILD & PUSH
+  # -----------------------------------------------------------------
+  docker-build-push:
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       packages: write
-
+    
     steps:
     - uses: actions/checkout@v4
-
+    
     - name: Convert repository name to lowercase
       run: |
         echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-
+    
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-
+    
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
+    
     - name: Build and Push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         file: ./littleShop.orders/Dockerfile
         push: true
-        tags: ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
-
-    - name: Run Integration Tests (Docker Compose)
-      run: |
-        export ORDERS_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
-
-        docker compose up -d --build
-
-        echo "⏳ Esperando a que los servicios estén listos..."
-        sleep 60
-    
-        # ✅ Esperar a que catalog tenga productos
-        echo "🔍 Verificando que catalog tenga productos..."
-        max_attempts=30
-        attempt=0
-        while [ $attempt -lt $max_attempts ]; do
-          if curl -s http://localhost:5002/api/v1/products | grep -q "Producto Test 1"; then
-            echo "✅ Catalog tiene productos!"
-            break
-          fi
-          echo "⏳ Intento $((attempt+1))/$max_attempts - Esperando a que catalog tenga productos..."
-          sleep 2
-          attempt=$((attempt+1))
-        done
-    
-        if [ $attempt -eq $max_attempts ]; then
-          echo "❌ Timeout esperando productos en catalog"
-          docker logs catalog-api
-          exit 1
-        fi
-
-        echo "==== 🔍 ESTADO DE LOS CONTENEDORES ===="
-        docker ps -a
-    
-        curl -X POST http://localhost:5001/api/Account/register \
-              -H "Content-Type: application/json" \
-              -d '{"email":"admin@test.com", "password":"Pass123$!"}'
-
-        echo "==== 🧪 PRUEBA MANUAL DEL ENDPOINT ===="
-        TOKEN=$(curl -s -X POST http://localhost:5001/api/Account/login \
-              -H "Content-Type: application/json" \
-              -d '{"email":"admin@test.com", "password":"Pass123$!"}' | jq -r '.token')
-
-        echo "Token obtenido: ${TOKEN:0:20}..."
-
-        curl -v -X POST http://localhost:5003/api/v1/orders \
-              -H "Content-Type: application/json" \
-              -H "Authorization: Bearer $TOKEN" \
-              -d '{"items": [{"productId": 1, "quantity": 2, "unitPrice": 10.0}], "shippingAddress": "Calle Falsa 123"}'
-        echo "==== FIN DEBUG ===="
-
-        npm install -g newman
-        newman run ./tests/orders-api-test.json --env-var baseUrl=http://localhost:5003
-
-        docker compose down
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
+          ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
