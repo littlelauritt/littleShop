@@ -8,16 +8,14 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# 1. COPIAR ARCHIVOS DE GESTIÓN DE PAQUETES (CRÍTICO PARA ERROR NU1015)
+# 1. COPIAR SOLO EL ARCHIVO DE PAQUETES QUE SÍ TIENES
 COPY ["Directory.Packages.props", "."]
-COPY ["Directory.Build.props", "."]
 
 # 2. COPIAR LOS CSPROJ
 COPY ["littleShop.notifications/littleShop.notifications.csproj", "littleShop.notifications/"]
 COPY ["littleShop.Shared/littleShop.Shared.csproj", "littleShop.Shared/"]
 
-# ⚠️ FIX CRÍTICO: Copiamos a la carpeta 'littleShop.serviceDefaults' (con 'S' mayúscula)
-# para que coincida con la referencia que hay dentro de tu .csproj
+# COPIAR EL SERVICE DEFAULTS EN LA CARPETA CORRECTA (Con Mayúsculas)
 COPY ["littleshop.serviceDefaults/littleshop.serviceDefaults.csproj", "littleShop.serviceDefaults/"]
 
 # 3. RESTAURAR DEPENDENCIAS
@@ -26,8 +24,7 @@ RUN dotnet restore "./littleShop.notifications/littleShop.notifications.csproj"
 # 4. COPIAR EL RESTO DEL CÓDIGO
 COPY . .
 
-# ⚠️ FIX CRÍTICO 2: Copiamos el código fuente de serviceDefaults a la carpeta con mayúsculas
-# Esto asegura que el compilador encuentre los archivos .cs en la ruta que espera Linux
+# COPIAR EL CÓDIGO FUENTE DE SERVICE DEFAULTS A LA CARPETA CON MAYÚSCULAS
 COPY ["littleshop.serviceDefaults/", "littleShop.serviceDefaults/"]
 
 WORKDIR "/src/littleShop.notifications"
