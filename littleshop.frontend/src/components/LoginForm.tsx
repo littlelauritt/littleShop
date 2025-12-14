@@ -1,12 +1,12 @@
 ﻿import { useState } from "react";
 import type { FormEvent } from "react";
 import { loginUser } from "../assets/api";
-import { saveToken, logout } from "../assets/utils/auth";
-import { useNavigate } from "react-router-dom"; // Necesitas este hook para navegar
+import { saveToken, logout, getUserRole } from "../assets/utils/auth"; // ✅ Importamos getUserRole
+import { useNavigate } from "react-router-dom";
+import { Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 
 interface LoginFormProps {
-    // onLogin: función que se llama en App.tsx para navegar tras el éxito
-    onLogin: () => void;
+    onLogin?: () => void; // Hacemos la prop opcional, ya que navegaremos nosotros
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
@@ -14,81 +14,87 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     const [loginPassword, setLoginPassword] = useState('');
     const [loginMessage, setLoginMessage] = useState('');
     const [loginLoading, setLoginLoading] = useState(false);
-    const navigate = useNavigate(); // Hook de navegación
+    const navigate = useNavigate();
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
         setLoginMessage('');
         setLoginLoading(true);
 
-        // Opcional: Limpiamos por si hay un token viejo que pueda causar conflictos
-        logout();
+        logout(); // Limpiar sesión anterior
 
         try {
-            // Usamos la función centralizada de loginUser de api.ts
             const token = await loginUser({ email: loginEmail, password: loginPassword });
-
-            setLoginLoading(false);
-
-            // La función loginUser devuelve el JWT (string) si tiene éxito.
-            saveToken(token); // ⬅️ Guardamos el JWT (string) directamente
+            saveToken(token); // Guardamos token
 
             setLoginMessage('¡Login exitoso! Redirigiendo...');
-            setLoginEmail('');
-            setLoginPassword('');
 
-            // Llamamos a la función de prop para que App.tsx o el wrapper maneje la redirección
-            onLogin();
+            // ✅ LÓGICA DE REDIRECCIÓN INTELIGENTE
+            const role = getUserRole(); // Leemos el rol del token recién guardado
+
+            setTimeout(() => {
+                setLoginLoading(false);
+                if (role === 'Admin') {
+                    navigate('/admin'); // Admin -> Panel
+                } else {
+                    navigate('/profile'); // Usuario normal -> Perfil
+                }
+
+                // Si existe la prop onLogin (por compatibilidad), la ejecutamos también
+                if (onLogin) onLogin();
+            }, 500); // Pequeña pausa para que se vea el mensaje de éxito
 
         } catch (error) {
             setLoginLoading(false);
-            // El error ya viene como un objeto Error de tu función loginUser, si usamos api.ts
-            // Si hay error 401, el mensaje vendrá de errorData en api.ts
-            setLoginMessage(`Error en login: ${error instanceof Error ? error.message : 'Verifica credenciales.'}`);
+            setLoginMessage(`Error: ${error instanceof Error ? error.message : 'Credenciales incorrectas'}`);
         }
     };
 
     return (
-        <form onSubmit={handleLogin}>
-            <div className="mb-3">
-                <label htmlFor="loginEmail" className="form-label">Email</label>
-                <input
-                    id="loginEmail"
-                    type="email"
-                    value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)}
-                    className="form-control"
-                    placeholder="Introduce tu correo"
-                    required
-                />
-            </div>
-            <div className="mb-3">
-                <label htmlFor="loginPassword" className="form-label">Contraseña</label>
-                <input
-                    id="loginPassword"
-                    type="password"
-                    value={loginPassword}
-                    onChange={e => setLoginPassword(e.target.value)}
-                    className="form-control"
-                    placeholder="Introduce tu contraseña"
-                    required
-                />
-            </div>
-            <button type="submit" disabled={loginLoading} className="btn btn-primary w-100">
-                {loginLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </button>
-            {loginMessage && (
-                <div className={`alert mt-3 ${loginMessage.includes('exitoso') ? 'alert-success' : 'alert-danger'}`} role="alert">
-                    {loginMessage}
-                </div>
-            )}
-            <button
-                type="button"
-                className="btn btn-link mt-2 w-100"
-                onClick={() => navigate('/register')} // Usamos navigate para cambiar a registro
-            >
-                ¿No tienes cuenta? Regístrate aquí
-            </button>
-        </form>
+        <Card className="shadow-sm border-0 p-4 mx-auto" style={{ maxWidth: '450px', borderRadius: '20px' }}>
+            <Card.Body>
+                <h2 className="text-center mb-4" style={{ color: '#4CC9F0' }}>¡Bienvenido!</h2>
+
+                <Form onSubmit={handleLogin}>
+                    <Form.Group className="mb-3">
+                        <Form.Label className="text-muted small">Email</Form.Label>
+                        <Form.Control
+                            type="email"
+                            placeholder="Introduce tu correo"
+                            value={loginEmail}
+                            onChange={e => setLoginEmail(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Form.Group className="mb-4">
+                        <Form.Label className="text-muted small">Contraseña</Form.Label>
+                        <Form.Control
+                            type="password"
+                            placeholder="Introduce tu contraseña"
+                            value={loginPassword}
+                            onChange={e => setLoginPassword(e.target.value)}
+                            required
+                        />
+                    </Form.Group>
+
+                    <Button variant="primary" type="submit" className="w-100 mb-3 py-2" disabled={loginLoading}>
+                        {loginLoading ? <Spinner animation="border" size="sm" /> : 'Iniciar Sesión'}
+                    </Button>
+
+                    {loginMessage && (
+                        <Alert variant={loginMessage.includes('exitoso') ? 'success' : 'danger'} className="py-2 small text-center">
+                            {loginMessage}
+                        </Alert>
+                    )}
+
+                    <div className="text-center mt-3">
+                        <Button variant="link" className="text-decoration-none text-muted small" onClick={() => navigate('/register')}>
+                            ¿No tienes cuenta? Regístrate aquí
+                        </Button>
+                    </div>
+                </Form>
+            </Card.Body>
+        </Card>
     );
 }

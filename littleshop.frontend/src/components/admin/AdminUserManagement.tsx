@@ -82,7 +82,7 @@ export default function AdminUserManagement() {
             <h4 className="mb-3">Gestión de Usuarios</h4>
             {msg && <Alert variant={msg.type} onClose={() => setMsg(null)} dismissible>{msg.text}</Alert>}
 
-            <Table striped bordered hover responsive>
+            <Table hover responsive className="align-middle">
                 <thead>
                     <tr>
                         <th>Email</th>

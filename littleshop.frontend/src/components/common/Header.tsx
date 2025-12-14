@@ -2,15 +2,14 @@
 import { getToken, logout, getUserRole, getUserEmail } from '../../assets/utils/auth';
 import { useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
+import { Container, Navbar, Nav, Button, Badge } from 'react-bootstrap';
 
 export default function Header() {
     const navigate = useNavigate();
     const location = useLocation();
-
     const [token, setToken] = useState<string | null>(getToken());
     const [role, setRole] = useState<string | null>(null);
     const [email, setEmail] = useState<string | null>(null);
-
     const { cartCount } = useCart();
 
     const handleLogout = () => {
@@ -28,65 +27,74 @@ export default function Header() {
     }, [location]);
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div className="container-fluid">
-                <a className="navbar-brand" href="/" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
-                    LittleShop 🛍️
-                </a>
-
-                <button
-                    className="btn btn-outline-light position-relative me-3 ms-auto"
-                    onClick={() => navigate('/cart')}
+        <Navbar expand="lg" className="bg-white sticky-top shadow-sm py-3">
+            <Container>
+                {/* ✅ CAMBIO: Color ROSA (#ff7696) y SIN emojis */}
+                <Navbar.Brand
+                    href="/"
+                    onClick={(e) => { e.preventDefault(); navigate('/'); }}
+                    className="fw-bold fs-3"
+                    style={{ color: '#ff7696' }}
                 >
-                    🛒 Carrito
-                    {cartCount > 0 && (
-                        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            {cartCount}
-                        </span>
-                    )}
-                </button>
+                    LittleShop
+                </Navbar.Brand>
 
-                <div className="collapse navbar-collapse flex-grow-0">
-                    <ul className="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
+                <Navbar.Toggle aria-controls="navbar-nav" />
+
+                <Navbar.Collapse id="navbar-nav">
+                    <Nav className="ms-auto align-items-center gap-3">
+
+                        {/* Botón Carrito (Mantenemos el estilo Cyan clarito que te gustaba) */}
+                        <Button
+                            variant="light"
+                            className="position-relative fw-bold"
+                            style={{ backgroundColor: '#e0f7fa', color: '#00B4D8', border: 'none' }}
+                            onClick={() => navigate('/cart')}
+                        >
+                            Carrito
+                            {cartCount > 0 && (
+                                <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle border border-light">
+                                    {cartCount}
+                                </Badge>
+                            )}
+                        </Button>
+
                         {token ? (
                             <>
-                                <li className="nav-item me-2">
-                                    <span className="navbar-text text-light fst-italic" style={{ fontSize: '0.9rem' }}>
-                                        {email}
-                                    </span>
-                                </li>
+                                <span className="text-muted d-none d-lg-block small me-2">
+                                    Hola, <strong>{email?.split('@')[0]}</strong>
+                                </span>
 
-                                {/* LÓGICA DE VISIBILIDAD DE BOTONES */}
-                                {role === 'Admin' ? (
-                                    // SI ES ADMIN: Solo ve el botón al Panel
-                                    <li className="nav-item">
-                                        <button className="nav-link btn btn-link text-warning fw-bold" onClick={() => navigate('/admin')}>
-                                            ⚙️ Panel Admin
-                                        </button>
-                                    </li>
-                                ) : (
-                                    // SI ES USER: Ve su perfil normal
-                                    <li className="nav-item">
-                                        <button className="nav-link btn btn-link" onClick={() => navigate('/profile')}>
-                                            👤 Mi Perfil
-                                        </button>
-                                    </li>
+                                <Button
+                                    variant="outline-secondary"
+                                    size="sm"
+                                    onClick={() => navigate('/profile')}
+                                >
+                                    👤 Mi Perfil
+                                </Button>
+
+                                {role === 'Admin' && (
+                                    <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        onClick={() => navigate('/admin')}
+                                    >
+                                        ⚙️ Panel Admin
+                                    </Button>
                                 )}
 
-                                <li className="nav-item">
-                                    <button className="btn btn-outline-danger ms-2 btn-sm" onClick={handleLogout}>
-                                        Salir
-                                    </button>
-                                </li>
+                                <Button variant="link" className="text-danger text-decoration-none small" onClick={handleLogout}>
+                                    Salir
+                                </Button>
                             </>
                         ) : (
-                            <li className="nav-item">
-                                <button className="btn btn-outline-success ms-2" onClick={() => navigate('/login')}>Login</button>
-                            </li>
+                            <Button variant="primary" onClick={() => navigate('/login')}>
+                                Iniciar Sesión
+                            </Button>
                         )}
-                    </ul>
-                </div>
-            </div>
-        </nav>
+                    </Nav>
+                </Navbar.Collapse>
+            </Container>
+        </Navbar>
     );
 }

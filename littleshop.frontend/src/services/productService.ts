@@ -1,5 +1,6 @@
-import { authenticatedFetch } from "../assets/api";
+﻿import { authenticatedFetch } from "../assets/api";
 
+// ✅ Actualizado con imageUrl
 export interface Product {
     id: number;
     name: string;
@@ -9,15 +10,16 @@ export interface Product {
     imageUrl?: string;
 }
 
-// DTO para crear/editar (sin ID)
+// ✅ Actualizado con imageUrl
 export interface ProductDto {
     name: string;
     description: string;
     price: number;
     stock: number;
+    imageUrl?: string;
 }
 
-// --- LECTURA (P�blico) ---
+// --- LECTURA (Público) ---
 
 export async function getProducts(): Promise<Product[]> {
     return await authenticatedFetch<Product[]>('/api/v1/products', 'GET');

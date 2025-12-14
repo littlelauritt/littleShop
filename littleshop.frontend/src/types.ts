@@ -17,3 +17,11 @@ export interface AuthResponse {
     email: string;
     roles: string[];
 }
+export interface Product {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    stock: number;
+    imageUrl?: string; // Campo opcional para la imagen
+}

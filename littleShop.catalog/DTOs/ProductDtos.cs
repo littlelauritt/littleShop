@@ -2,17 +2,20 @@
 
 namespace littleShop.catalog.DTOs;
 
-public record ProductResponse(int Id, string Name, string? Description, decimal Price, int Stock);
+// ✅ Añadido ImageUrl al final
+public record ProductResponse(int Id, string Name, string? Description, decimal Price, int Stock, string? ImageUrl);
 
 public record CreateProductRequest(
     [Required][MinLength(3)] string Name,
     string? Description,
     [Range(0.01, 10000)] decimal Price,
-    [Range(0, 9999)] int Stock
+    [Range(0, 9999)] int Stock,
+    string? ImageUrl // ✅ Nuevo (Opcional)
 );
 
 public record UpdateStockRequest(int Stock);
-public record UpdateProductRequest(string Name, string? Description, decimal Price, int Stock);
+
+public record UpdateProductRequest(string Name, string? Description, decimal Price, int Stock, string? ImageUrl);
 
 public record PagedResponse<T>(
     IEnumerable<T> Items,
