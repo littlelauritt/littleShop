@@ -140,20 +140,23 @@ public class OrderService
             .ToListAsync();
 
         var response = orders.Select(o => new OrderResponse(
-            o.Id,
-            o.UserId,
-            o.CustomerEmail,
-            o.CreatedAt,
-            o.TotalAmount,
-            o.Status.ToString(),
-            o.ShippingAddress,
-            o.Items.Select(i => new OrderItemResponseDto(
-                i.ProductId,
-                i.ProductName,
-                i.Quantity,
-                i.UnitPrice
-            )).ToList()
-        )).ToList();
+    o.Id,
+    o.UserId,
+    o.CustomerEmail,
+    o.CreatedAt,
+    o.TotalAmount,
+    o.Status.ToString(),
+    o.ShippingAddress,
+    o.Items.Select(i => new OrderItemResponseDto(
+        i.ProductId,
+        i.ProductName,
+        i.Quantity,
+        i.UnitPrice
+    )).ToList(),
+    o.CancellationRequested,           
+    o.CancellationRequestedAt,         
+    o.CancellationReason            
+)).ToList();
 
         return ServiceResult<List<OrderResponse>>.Success(response);
     }
@@ -182,7 +185,11 @@ public class OrderService
                 i.ProductName,
                 i.Quantity,
                 i.UnitPrice
-            )).ToList()
+            )).ToList(),
+            // 👇 ¡AQUÍ FALTABAN ESTAS 3 LÍNEAS! 👇
+            o.CancellationRequested,
+            o.CancellationRequestedAt,
+            o.CancellationReason
         )).ToList();
 
         var response = new PagedResponse<OrderResponse>(
@@ -196,7 +203,8 @@ public class OrderService
         return ServiceResult<PagedResponse<OrderResponse>>.Success(response);
     }
 
-    public async Task<ServiceResult<bool>> CancelOrderAsync(int orderId, string userId)
+    // Usuario normal: SOLICITA cancelación (envía email al admin)
+    public async Task<ServiceResult<bool>> RequestCancellationAsync(int orderId, string userId, string reason)
     {
         var order = await _context.Orders
             .Include(o => o.Items)
@@ -205,13 +213,54 @@ public class OrderService
         if (order == null)
             return ServiceResult<bool>.Failure("Pedido no encontrado.");
 
+        if (order.Status == OrderStatus.Cancelled)
+            return ServiceResult<bool>.Failure("El pedido ya está cancelado.");
+
+        if (order.Status != OrderStatus.Pending)
+            return ServiceResult<bool>.Failure("Solo se pueden solicitar cancelaciones de pedidos pendientes.");
+
+        if (order.CancellationRequested)
+            return ServiceResult<bool>.Failure("Ya existe una solicitud de cancelación para este pedido.");
+
+        // Marcar solicitud
+        order.CancellationRequested = true;
+        order.CancellationRequestedAt = DateTime.UtcNow;
+        order.CancellationReason = reason;
+        await _context.SaveChangesAsync();
+
+        // ✅ Publicar evento para que Identity envíe email al admin
+        await _publishEndpoint.Publish(new OrderCancellationRequestedEvent(
+            order.Id,
+            order.UserId,
+            order.CustomerEmail,
+            reason,
+            DateTime.UtcNow
+        ));
+
+        return ServiceResult<bool>.Success(true);
+    }
+
+    // Admin: CANCELA directamente el pedido
+    public async Task<ServiceResult<bool>> CancelOrderAdminAsync(int orderId)
+    {
+        var order = await _context.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null)
+            return ServiceResult<bool>.Failure("Pedido no encontrado.");
+
+        if (order.Status == OrderStatus.Cancelled)
+            return ServiceResult<bool>.Failure("El pedido ya está cancelado.");
+
         if (order.Status != OrderStatus.Pending)
             return ServiceResult<bool>.Failure("Solo se pueden cancelar pedidos pendientes.");
 
         order.Status = OrderStatus.Cancelled;
+        order.CancellationRequested = false;
         await _context.SaveChangesAsync();
 
-        // ✅ Publicar evento usando TU estructura
+        // Publicar evento para restaurar stock
         var itemsToRestore = order.Items.ToDictionary(
             i => i.ProductId,
             i => i.Quantity
@@ -220,7 +269,7 @@ public class OrderService
         await _publishEndpoint.Publish(new OrderCancelledEvent(
             order.Id,
             order.CustomerEmail,
-            "Cancelado por el usuario",
+            order.CancellationReason ?? "Cancelado por administrador",
             itemsToRestore
         ));
 
@@ -231,7 +280,6 @@ public class OrderService
     {
         var order = await _context.Orders.FindAsync(orderId);
 
-        // CORRECCIÓN: Permitimos enviar si está Confirmado O Pendiente
         if (order == null ||
            (order.Status != OrderStatus.Confirmed && order.Status != OrderStatus.Pending))
         {
@@ -240,22 +288,16 @@ public class OrderService
 
         order.Status = OrderStatus.Shipped;
         await _context.SaveChangesAsync();
-        return true;
-    }
 
-    public async Task<bool> CancelOrderAdminAsync(int orderId)
-    {
-        var order = await _context.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == orderId);
+        // ✅ CORREGIDO: Añadimos un número de seguimiento ficticio
+        var trackingNumber = "TRK-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
 
-        // Un admin puede cancelar si no está ya cancelado ni enviado
-        if (order == null || order.Status == OrderStatus.Cancelled || order.Status == OrderStatus.Shipped) return false;
+        await _publishEndpoint.Publish(new OrderShippedEvent(
+            order.Id,
+            order.CustomerEmail,
+            trackingNumber // <--- ¡AQUÍ ESTABA EL FALTANTE!
+        ));
 
-        // 1. Devolvemos Stock al catálogo (Opcional: llamar al microservicio Catalog para devolver stock)
-        // Por simplicidad ahora mismo solo cambiamos el estado.
-
-        // 2. Cambiamos estado
-        order.Status = OrderStatus.Cancelled;
-        await _context.SaveChangesAsync();
         return true;
     }
 }

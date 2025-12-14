@@ -124,7 +124,7 @@ services:
       - ConnectionStrings__catalogdb=Host=catalog-db;Database=catalogdb;Username=postgres;Password=postgres
       - ConnectionStrings__messaging=amqp://guest:guest@identity-rabbitmq:5672
 
-  # --- ORDERS API ---
+# --- ORDERS API ---
   orders-api:
     build:
       context: .
@@ -150,6 +150,23 @@ services:
       - Jwt__Issuer=littleShop-test
       - Jwt__Audience=littleShop-test
       - Jwt__Key=EstaEsUnaClaveSecretaMuyLargaYSegura123!
+
+ 
+  # --- NOTIFICATIONS (Worker Service) ---
+  notifications:
+    build:
+      context: .
+      dockerfile: littleShop.notifications/Dockerfile
+    container_name: littleshop-notifications
+    restart: on-failure
+    depends_on:
+      identity-rabbitmq:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__messaging=amqp://guest:guest@identity-rabbitmq:5672
+      - SMTP_HOST=localhost:1025
+      - AdminEmail=admin@littleshop.com
 
 volumes:
   identity_postgres_data:

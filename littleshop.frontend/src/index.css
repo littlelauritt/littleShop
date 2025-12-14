@@ -1,9 +1,179 @@
-/* index.css */
-/* Estilos globales mínimos */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+:root {
+    /* --- PALETA CIELO PASTEL (CLEAN) --- */
+    --bg-cream: #fdfbf7;
+    --sky-main: #4CC9F0; /* Cyan Vibrante Pastel */
+    --sky-dark: #00B4D8; /* Cyan más oscuro */
+    --sky-light: #CAF0F8; /* Cyan muy clarito */
+    /* Acentos y Textos */
+    --accent-pink: #FFC8DD;
+    --text-main: #5f6c7b; /* Gris piedra suave para texto normal */
+    --text-dark: #2c3e50; /* Gris oscuro neutro para TÍTULOS */
+    /* Estados */
+    --state-danger: #e74c3c; /* Rojo fuerte */
+    --state-warning-strong: #f39c12; /* Naranja fuerte para cancelación */
+    --state-success: #2ecc71; /* Verde estándar */
+}
+
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #121212; /* Fondo oscuro */
-    color: #fff;
+    background-color: var(--bg-cream) !important;
+    font-family: 'Quicksand', sans-serif !important;
+    color: var(--text-main) !important;
+}
+
+/* --- 1. TÍTULOS NEUTROS (Sin colorines) --- */
+h1, h2, h3, h4, h5, .h1, .h2, .h3, .h4, .h5 {
+    color: var(--text-dark) !important;
+    font-weight: 700 !important;
+    margin-bottom: 1.5rem;
+}
+
+/* --- 2. BOTONES (Más pequeños y limpios) --- */
+.btn-primary {
+    background-color: var(--sky-main) !important;
+    border-color: var(--sky-main) !important;
+    color: white !important;
+    border-radius: 50px !important;
+    font-weight: 600 !important;
+    /* Reducimos padding para que no sean tan grandes */
+    padding: 6px 16px !important;
+    box-shadow: none !important; /* Quitamos sombras */
+    transition: all 0.2s ease !important;
+}
+
+    .btn-primary:hover, .btn-primary:active {
+        background-color: var(--sky-dark) !important;
+        border-color: var(--sky-dark) !important;
+    }
+
+/* Botón Secundario (Grisáceo limpio) */
+.btn-secondary, .btn-outline-secondary {
+    background-color: #e9ecef !important;
+    border-color: #e9ecef !important;
+    color: var(--text-dark) !important;
+    border-radius: 50px !important;
+}
+
+    .btn-secondary:hover {
+        background-color: #dee2e6 !important;
+    }
+
+/* Otros botones */
+.btn-danger {
+    background-color: var(--state-danger) !important;
+    border: none;
+}
+
+.btn-success {
+    background-color: var(--state-success) !important;
+    border: none;
+}
+
+/* --- 3. PAGINACIÓN (Más discreta) --- */
+.page-link {
+    color: var(--text-main) !important; /* Color texto normal */
+    border: 1px solid #dee2e6 !important; /* Borde estándar */
+    background: white !important;
+    margin: 0 2px;
+    border-radius: 5px !important; /* Menos redondeado */
+}
+
+.page-item.active .page-link {
+    background-color: var(--sky-dark) !important; /* Azul oscuro activo */
+    border-color: var(--sky-dark) !important;
+    color: white !important;
+    box-shadow: none !important;
+}
+
+/* --- 4. TABLAS SIMPLES (Estilo estándar limpio) --- */
+.table {
+    background-color: white !important;
+    /* Quitamos bordes redondeados extremos y sombras */
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin-top: 1rem;
+}
+
+    /* Cabecera simple: fondo gris claro, texto oscuro */
+    .table thead th {
+        background-color: #f8f9fa !important;
+        color: var(--text-dark) !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        padding: 12px !important;
+        text-transform: none !important; /* Quitamos mayúsculas forzadas */
+        font-weight: 600;
+    }
+
+    /* Celdas simples */
+    .table tbody td {
+        border-bottom: 1px solid #dee2e6 !important;
+        color: var(--text-main);
+        vertical-align: middle;
+        padding: 12px !important;
+    }
+
+/* --- 5. TARJETAS (Más planas) --- */
+.card {
+    border: 1px solid #eee !important; /* Borde sutil */
+    border-radius: 15px !important;
+    background-color: white !important;
+    box-shadow: none !important; /* Quitamos sombra */
+    transition: transform 0.2s;
+}
+
+    .card:hover {
+        transform: none !important; /* Quitamos el efecto de salto */
+        border-color: var(--sky-main) !important; /* Solo cambia el color del borde */
+    }
+
+.card-title {
+    color: var(--text-dark) !important;
+    font-weight: 700;
+}
+
+/* --- 6. BADGES Y ESTADOS --- */
+.badge {
+    border-radius: 30px !important; /* Estilo píldora */
+    padding: 6px 12px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    box-shadow: none !important;
+}
+
+.bg-primary {
+    background-color: var(--sky-main) !important;
+    color: white;
+}
+
+.bg-success {
+    background-color: var(--state-success) !important;
+}
+
+.bg-danger {
+    background-color: var(--state-danger) !important;
+}
+
+/* NUEVO: Estado fuerte para cancelación solicitada */
+.badge-cancellation {
+    background-color: var(--state-warning-strong) !important;
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+/* --- 7. NAVBAR Y INPUTS --- */
+.navbar {
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.form-control, .form-select {
+    border-radius: 10px !important;
+    border: 1px solid #ced4da !important;
+    padding: 10px !important;
+}
+
+.form-control:focus {
+    border-color: var(--sky-main) !important;
+    box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.2) !important;
 }

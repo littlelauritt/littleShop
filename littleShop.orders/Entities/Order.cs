@@ -8,9 +8,11 @@ public class Order
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public decimal TotalAmount { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
-
-
     public string ShippingAddress { get; set; } = string.Empty;
+
+    public bool CancellationRequested { get; set; } = false;
+    public DateTime? CancellationRequestedAt { get; set; }
+    public string? CancellationReason { get; set; }
 
     public List<OrderItem> Items { get; set; } = new();
 }

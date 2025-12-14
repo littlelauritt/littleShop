@@ -50,28 +50,18 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 
 // =========================================================
-// 5. MIGRACIONES Y DATA SEEDING (CRÍTICO PARA DOCKER)
+// 5. MIGRACIONES AUTOMÁTICAS (Sin datos de prueba)
 // =========================================================
-// Lo hacemos fuera del 'if Development' para que se ejecute siempre
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
-        await db.Database.MigrateAsync();
-        Console.WriteLine("✅ Base de datos de Catálogo migrada correctamente.");
 
-        // ✅ AÑADIR ESTO:
-        if (!db.Products.Any())
-        {
-            db.Products.AddRange(
-                new Product { Name = "Producto Test 1", Description = "Producto de prueba", Price = 10.00m, Stock = 100 },
-                new Product { Name = "Producto Test 2", Description = "Otro producto", Price = 25.50m, Stock = 50 },
-                new Product { Name = "Producto Test 3", Description = "Más pruebas", Price = 15.00m, Stock = 75 }
-            );
-            await db.SaveChangesAsync();
-            Console.WriteLine("✅ Productos de prueba creados.");
-        }
+        // Esto crea la BD o actualiza las columnas nuevas (como ImageUrl)
+        await db.Database.MigrateAsync();
+
+        Console.WriteLine("✅ Base de datos de Catálogo actualizada correctamente.");
     }
     catch (Exception ex)
     {
@@ -79,18 +69,18 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// 6. DOCUMENTACIÓN (SCALAR) - DISPONIBLE SIEMPRE
+// 6. DOCUMENTACIÓN (SCALAR)
 app.MapOpenApi();
 app.MapScalarApiReference(options =>
 {
     options.WithTitle("LittleShop Catalog API");
-    options.WithTheme(ScalarTheme.Mars); // ¡Le ponemos un tema diferente para distinguirla!
+    options.WithTheme(ScalarTheme.Mars);
     options.WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
 });
 
 
 // =========================================================
-// DEFINICIÓN DE ENDPOINTS (MINIMAL API)
+// DEFINICIÓN DE ENDPOINTS
 // =========================================================
 
 var api = app.MapGroup("/api/v1/products").WithTags("Products");
@@ -103,12 +93,11 @@ api.MapGet("/", async (int? page, int? pageSize, ProductService service) =>
 
 api.MapGet("/{id:int}", async (int id, ProductService service) =>
 {
-var result = await service.GetByIdAsync(id);
-return result.Succeeded
-    ? Results.Ok(result.Data)
-    : Results.NotFound(new { error = result.Errors });
+    var result = await service.GetByIdAsync(id);
+    return result.Succeeded
+        ? Results.Ok(result.Data)
+        : Results.NotFound(new { error = result.Errors });
 });
-
 
 api.MapPost("/", async (CreateProductRequest request, ProductService service) =>
 {
@@ -136,7 +125,6 @@ api.MapDelete("/{id:int}", async (int id, ProductService service) =>
     return result.Succeeded ? Results.NoContent() : Results.NotFound(result.Errors);
 });
 
-// Redirección a la documentación
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
 
 app.Run();

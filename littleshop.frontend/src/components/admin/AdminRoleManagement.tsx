@@ -89,7 +89,7 @@ export default function AdminRoleManagement() {
                 <Button variant="primary" onClick={handleCreate}>Crear Rol</Button>
             </InputGroup>
 
-            <Table striped bordered hover>
+            <Table hover responsive className="align-middle">
                 <thead>
                     <tr>
                         <th>Nombre del Rol</th>
