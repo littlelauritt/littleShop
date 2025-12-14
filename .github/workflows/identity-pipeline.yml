@@ -1,169 +1,74 @@
 ﻿name: Identity API CI/CD
 
 on:
-  workflow_dispatch:
   push:
     branches: [ "main" ]
     paths:
       - 'littleShop.identity/**'
       - 'littleShop.Shared/**'
       - 'littleshop.serviceDefaults/**'
-      - '.github/workflows/identity-pipeline.yml'
-      - 'tests/identity-api-test.json'
+      - '.github/workflows/**'
+      - 'docker-compose.yml'
+      - 'tests/**'
   pull_request:
     branches: [ "main" ]
 
 env:
-  DOTNET_VERSION: '10.0.x'
   REGISTRY: ghcr.io
 
 jobs:
-  # -----------------------------------------------------------------
-  # JOB 1: BUILD & UNIT TESTS
-  # -----------------------------------------------------------------
   build-and-test:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
-    
     - name: Setup .NET 10 Preview
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+        dotnet-version: '10.0.x'
         dotnet-quality: 'preview'
-    
     - name: Restore Dependencies
       run: dotnet restore littleShop.identity/littleShop.identity.csproj
-    
     - name: Build
       run: dotnet build littleShop.identity/littleShop.identity.csproj --no-restore -c Release
-    
     - name: Run Unit Tests
-      run: dotnet test littleShop.identity.Tests/littleShop.identity.Tests.csproj --verbosity normal --logger "trx;LogFileName=test-results.trx"
-    
-    - name: Publish Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results-identity
-        path: '**/test-results.trx'
+      run: dotnet test littleShop.identity.Tests/littleShop.identity.Tests.csproj --verbosity normal
 
-  # -----------------------------------------------------------------
-  # JOB 2: INTEGRATION TESTS (usando Aspire AppHost)
-  # -----------------------------------------------------------------
-  integration-tests:
+  docker-build-push:
     needs: build-and-test
     runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup .NET 10 Preview
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-        dotnet-quality: 'preview'
-    
-    - name: Install Aspire workload
-      run: dotnet workload install aspire
-    
-    - name: Restore all projects
-      run: dotnet restore littleShop.sln
-    
-    - name: Build entire solution
-      run: dotnet build littleShop.sln -c Release --no-restore
-    
-    - name: Start Aspire AppHost in background
-      run: |
-        cd littleShop
-        nohup dotnet run --no-build -c Release > aspire.log 2>&1 &
-        echo $! > aspire.pid
-        echo "⏳ Waiting for Aspire to start..."
-        sleep 45
-    
-    - name: Wait for Identity API to be ready
-      run: |
-        echo "🔍 Checking Identity API health..."
-        max_attempts=30
-        attempt=0
-        while [ $attempt -lt $max_attempts ]; do
-          if curl -f -s http://localhost:5001/health > /dev/null 2>&1; then
-            echo "✅ Identity API is ready!"
-            break
-          fi
-          echo "⏳ Attempt $((attempt+1))/$max_attempts - waiting for Identity API..."
-          sleep 2
-          attempt=$((attempt+1))
-        done
-        
-        if [ $attempt -eq $max_attempts ]; then
-          echo "❌ Timeout waiting for Identity API"
-          cat aspire.log || echo "No Aspire logs available"
-          exit 1
-        fi
-    
-    - name: Install Newman (Postman CLI)
-      run: npm install -g newman
-    
-    - name: Run Integration Tests
-      run: |
-        newman run ./tests/identity-api-test.json \
-          --env-var baseUrl=http://localhost:5001 \
-          --reporters cli,json \
-          --reporter-json-export newman-results.json
-    
-    - name: Upload Newman Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: newman-results-identity
-        path: newman-results.json
-    
-    - name: Stop Aspire AppHost
-      if: always()
-      run: |
-        if [ -f aspire.pid ]; then
-          kill $(cat aspire.pid) || true
-        fi
-        cat aspire.log || echo "No Aspire logs available"
-
-  # -----------------------------------------------------------------
-  # JOB 3: DOCKER BUILD & PUSH (opcional, solo si quieres contenedores)
-  # -----------------------------------------------------------------
-  docker-build-push:
-    needs: integration-tests
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       packages: write
-    
     steps:
     - uses: actions/checkout@v4
-    
     - name: Convert repository name to lowercase
       run: |
         echo "LOWERCASE_REPO=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-    
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    
     - name: Build and Push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         file: ./littleShop.identity/Dockerfile
         push: true
-        tags: |
-          ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/identity-api:latest
-          ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/identity-api:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        tags: ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/identity-api:latest
+    - name: Run Integration Tests (Docker Compose)
+      run: |
+        export IDENTITY_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/identity-api:latest
+        
+        docker compose up -d --build
+        
+        echo "⏳ Esperando 15 segundos..."
+        sleep 15
+        
+        npm install -g newman
+        newman run ./tests/identity-api-test.json --env-var baseUrl=http://localhost:5001
+        
+        docker compose down
