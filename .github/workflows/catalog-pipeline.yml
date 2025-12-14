@@ -64,7 +64,7 @@ jobs:
       run: |
         export CATALOG_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/catalog-api:latest
         
-        docker compose up -d --build
+        docker compose up -d --build catalog-api catalog-db
         
         echo "⏳ Esperando 60 segundos..."
         sleep 60

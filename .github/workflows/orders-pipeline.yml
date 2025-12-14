@@ -64,7 +64,9 @@ jobs:
     - name: Run Integration Tests (Docker Compose)
       run: |
         export ORDERS_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
-        docker compose up -d --build
+
+        docker compose up -d --build orders-api orders-db identity-api identity-db catalog-api catalog-db
+
         echo "⏳ Esperando a que los servicios estén listos..."
         sleep 60
         

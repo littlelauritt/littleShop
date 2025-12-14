@@ -63,7 +63,7 @@ jobs:
       run: |
         export IDENTITY_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/identity-api:latest
         
-        docker compose up -d --build
+        docker compose up -d --build identity-api identity-db identity-rabbitmq
         
         echo "⏳ Esperando 15 segundos..."
         sleep 15
