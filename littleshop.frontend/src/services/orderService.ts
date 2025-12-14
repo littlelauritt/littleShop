@@ -1,6 +1,5 @@
 ﻿import { authenticatedFetch } from "../assets/api";
 
-// DTOs
 export interface OrderItemDto {
     productId: number;
     productName: string;
@@ -23,7 +22,6 @@ export interface OrderResponse {
     customerEmail?: string;
 }
 
-// --- FUNCIONES CLIENTE ---
 
 export async function createOrder(items: OrderItemDto[]): Promise<OrderResponse> {
     const body: CreateOrderRequest = {
@@ -37,7 +35,6 @@ export async function getMyOrders(): Promise<OrderResponse[]> {
     return await authenticatedFetch<OrderResponse[]>('/api/v1/orders', 'GET');
 }
 
-// ✅ NUEVO: Usuario solicita cancelación (NO cancela directamente)
 export async function requestCancellation(orderId: number, reason: string): Promise<void> {    return await authenticatedFetch<void>(
         `/api/v1/orders/${orderId}/request-cancellation`,
         'POST',
@@ -45,7 +42,6 @@ export async function requestCancellation(orderId: number, reason: string): Prom
     );
 }
 
-// --- FUNCIONES ADMIN ---
 
 export async function getAllOrdersAdmin(): Promise<OrderResponse[]> {
     return await authenticatedFetch<OrderResponse[]>('/api/v1/orders/admin', 'GET');
@@ -55,7 +51,6 @@ export async function shipOrderAdmin(orderId: number): Promise<void> {
     return await authenticatedFetch<void>(`/api/v1/orders/admin/${orderId}/ship`, 'POST');
 }
 
-// ✅ CORREGIDO: Admin cancela pedido directamente
 export async function cancelOrderAdmin(orderId: number): Promise<void> {
     return await authenticatedFetch<void>(`/api/v1/orders/admin/${orderId}/cancel`, 'POST');
 }

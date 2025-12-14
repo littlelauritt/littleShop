@@ -23,7 +23,6 @@ public class OrderCreatedConsumer(IEmailService emailService, ILogger<OrderCreat
             <p>Te avisaremos cuando salga de nuestro almacén.</p>
         ";
 
-        // IMPORTANTE: Usamos SendEmailAsync (genérico), NO SendWelcomeEmailAsync
         await emailService.SendEmailAsync(msg.Email, subject, body);
     }
 }

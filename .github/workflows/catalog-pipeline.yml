@@ -30,7 +30,6 @@ jobs:
       run: dotnet restore littleShop.catalog/littleShop.catalog.csproj
     - name: Build
       run: dotnet build littleShop.catalog/littleShop.catalog.csproj --no-restore -c Release
-    # HE AÑADIDO ESTO PARA QUE VERIFIQUE TUS TESTS ARREGLADOS
     - name: Run Unit Tests
       run: dotnet test littleShop.catalog.Tests/littleShop.catalog.Tests.csproj --verbosity normal
 
@@ -69,7 +68,6 @@ jobs:
         echo "⏳ Esperando 60 segundos..."
         sleep 60
         
-        # 🕵️‍♂️ MODO DETECTIVE ACTIVADO 🕵️‍♂️
         echo "==== 🔍 ESTADO DE LOS CONTENEDORES ===="
         docker ps -a
         echo "==== 📜 LOGS DE CATALOG-API (EL CULPABLE) ===="

@@ -21,17 +21,14 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
-// ---------------------------------------------------------
 // 1. CONFIGURACIÓN RABBITMQ (MassTransit)
-// ---------------------------------------------------------
+
 builder.Services.AddMassTransit(bus =>
 {
     bus.SetKebabCaseEndpointNameFormatter();
 
     bus.UsingRabbitMq((context, cfg) =>
     {
-        // Usamos la cadena de conexión completa que Aspire nos da
         var configuration = context.GetRequiredService<IConfiguration>();
         var connectionString = configuration.GetConnectionString("messaging");
 
@@ -41,23 +38,17 @@ builder.Services.AddMassTransit(bus =>
         }
         else
         {
-            // Fallback por si acaso (aunque no debería entrar aquí)
             cfg.Host("messaging", "/");
         }
     });
 });
 
-// ---------------------------------------------------------
 // 2. CONFIGURACIÓN FLUENT VALIDATION
-// ---------------------------------------------------------
-// Escanea el proyecto y registra todos los validadores (como el que acabamos de crear)
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// ---------------------------------------------------------
 // 3. BASE DE DATOS E IDENTITY
-// ---------------------------------------------------------
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    // CAMBIO IMPORTANTE: "identitydb" debe coincidir con el nombre en AppHost.cs
     options.UseNpgsql(builder.Configuration.GetConnectionString("identitydb")));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -72,17 +63,13 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// ---------------------------------------------------------
 // 4. OPENAPI (Corregido para .NET 10)
-// ---------------------------------------------------------
 builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer<IdentityDocumentTransformer>();
 });
 
-// ---------------------------------------------------------
 // 5. JWT & AUTH
-// ---------------------------------------------------------
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddSingleton(jwtOptions);
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -108,9 +95,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// ---------------------------------------------------------
 // 6. VERSIONADO
-// ---------------------------------------------------------
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -124,9 +109,7 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// ---------------------------------------------------------
 // 7. CORS
-// ---------------------------------------------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -139,11 +122,8 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// ---------------------------------------------------------
 // 8. MIDDLEWARES
-// ---------------------------------------------------------
 
-// 1. BASE DE DATOS (Mantenemos tu protección anti-caídas)
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -161,7 +141,6 @@ using (var scope = app.Services.CreateScope())
                 await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
-    // Arreglamos el Warning CS0168 quitando la variable 'ex' que no usabas
     catch (Exception)
     {
         Console.WriteLine("⚠️ BD no disponible (Docker mode).");
@@ -172,13 +151,8 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
-// 2. OPENAPI V10 REAL
-// En .NET 10, MapOpenApi genera el JSON automáticamente.
 app.MapOpenApi();
 
-// 3. SCALAR (Documentación visual)
-// Hacemos que funcione TAMBIÉN fuera de Development para que el Docker test apruebe
 app.MapScalarApiReference(options =>
 {
     options.WithOpenApiRoutePattern("/openapi/v1.json");
@@ -186,14 +160,10 @@ app.MapScalarApiReference(options =>
     options.WithTheme(ScalarTheme.DeepSpace);
 });
 
-// Redirección a la documentación
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
 
 app.Run();
 
-// ---------------------------------------------------------
-// DOCUMENT TRANSFORMER para .NET 10
-// ---------------------------------------------------------
 internal sealed class IdentityDocumentTransformer : IOpenApiDocumentTransformer
 {
     public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)

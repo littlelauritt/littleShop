@@ -34,22 +34,18 @@ public class EmailService : IEmailService
         }
 
         // 2. BÚSQUEDA ROBUSTA DE LA URL DEL FRONTEND
-        // Estrategia 1: Variable de entorno directa (la que intentamos antes)
         var url = configuration["FRONTEND_URL"];
 
-        // Estrategia 2: Service Discovery de Aspire (gracias a .WithReference)
         if (string.IsNullOrEmpty(url))
         {
             url = configuration["services:littleshop-frontend:frontend-http:0"];
         }
 
-        // Estrategia 3: Service Discovery alternativo (a veces cambia el nombre interno)
         if (string.IsNullOrEmpty(url))
         {
             url = configuration["services:littleshop-frontend:http:0"];
         }
 
-        // Resultado final
         if (string.IsNullOrEmpty(url))
         {
             _logger.LogError("🛑 ERROR CRÍTICO: No se pudo encontrar la URL del frontend en ninguna configuración. Usando localhost:5173 como último recurso.");

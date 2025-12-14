@@ -11,14 +11,12 @@ var frontendApp = builder.AddExecutable("littleshop-frontend", "npm", frontendPa
 
 // --- 2. Infraestructura ---
 
-// VUELVE EL PUERTO 5432 (Como tú querías)
 var postgresContainer = builder.AddPostgres("postgres")
     .WithDataVolume("littleshop-postgres-data")
     .WithHostPort(5432) // <--- Aquí está tu puerto fijo recuperado
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgAdmin(pg => pg.WithHostPort(5050));
 
-// Base de datos para Identity (renombrada correctamente)
 var identityDb = postgresContainer.AddDatabase("identitydb");
 var catalogDb = postgresContainer.AddDatabase("catalogdb");
 var ordersDb = postgresContainer.AddDatabase("ordersdb");

@@ -58,7 +58,6 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
 
-        // Esto crea la BD o actualiza las columnas nuevas (como ImageUrl)
         await db.Database.MigrateAsync();
 
         Console.WriteLine("✅ Base de datos de Catálogo actualizada correctamente.");

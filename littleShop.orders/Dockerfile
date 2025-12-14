@@ -14,7 +14,7 @@ COPY ["Directory.Packages.props", "."]
 
 # 4. COPIAMOS LOS PROYECTOS (¡AQUÍ TAMBIÉN FALTABAN!)
 COPY ["littleShop.orders/littleShop.orders.csproj", "littleShop.orders/"]
-# ⭐⭐⭐ AÑADIDO: Dependencias necesarias
+
 COPY ["littleShop.Shared/littleShop.Shared.csproj", "littleShop.Shared/"]
 COPY ["littleshop.serviceDefaults/littleshop.serviceDefaults.csproj", "littleshop.serviceDefaults/"]
 

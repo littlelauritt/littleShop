@@ -1,6 +1,5 @@
 ﻿namespace littleShop.identity.Models;
 
-// Clase genérica para devolver respuestas paginadas
 public class PagedResponse<T>
 {
     public IEnumerable<T> Items { get; set; } = [];

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // Necesario para Skip, Take, CountAsync
+using Microsoft.EntityFrameworkCore;
 using Projects.littleShop_identity.Data;
 
 namespace littleShop.identity.Controllers
@@ -20,7 +20,6 @@ namespace littleShop.identity.Controllers
             _userManager = userManager;
         }
 
-        // GET CON PAGINACIÓN
         [HttpGet]
         public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -28,13 +27,10 @@ namespace littleShop.identity.Controllers
             if (pageSize < 1) pageSize = 10;
 
             var query = _userManager.Users;
-
-            // 1. Contar total real en BBDD
             var totalCount = await query.CountAsync();
 
-            // 2. Paginar usando Skip y Take
             var users = await query
-                .OrderBy(u => u.Email) // Ordenamos por email para consistencia
+                .OrderBy(u => u.Email) 
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(u => new
@@ -45,7 +41,6 @@ namespace littleShop.identity.Controllers
                 })
                 .ToListAsync();
 
-            // 3. Devolver respuesta paginada
             var response = new PagedResponse<object>(users, totalCount, page, pageSize);
 
             return Ok(response);
@@ -80,7 +75,7 @@ namespace littleShop.identity.Controllers
             if (user == null) return NotFound();
 
             user.Email = model.Email;
-            user.UserName = model.Email; // Manteniendo coherencia Email = UserName
+            user.UserName = model.Email;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded) return BadRequest(result.Errors);
@@ -106,7 +101,6 @@ namespace littleShop.identity.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
-            // Bloquear por 100 años
             var result = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
             if (!result.Succeeded) return BadRequest(result.Errors);
 
@@ -119,7 +113,6 @@ namespace littleShop.identity.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
-            // Establecer fecha de fin de bloqueo a null desbloquea al usuario
             var result = await _userManager.SetLockoutEndDateAsync(user, null);
             if (!result.Succeeded) return BadRequest(result.Errors);
 

@@ -29,7 +29,7 @@ namespace littleShop.catalog.Tests
         [Test]
         public async Task CreateAsync_ShouldAddProductAndSaveChanges()
         {
-            // CORREGIDO: Añadido null al final para ImageUrl
+       
             var request = new CreateProductRequest("Portátil", "Gaming", 1000m, 10, null);
 
             _mockSet.Setup(m => m.Add(It.IsAny<Product>()));
@@ -79,7 +79,6 @@ namespace littleShop.catalog.Tests
             var productId = 1;
             var product = new Product { Id = productId, Name = "Viejo", Price = 10, Stock = 10 };
 
-            // CORREGIDO: Añadido null al final para ImageUrl
             var updateReq = new UpdateProductRequest("Nuevo", "Desc Nueva", 20, 20, null);
 
             _mockSet.Setup(m => m.FindAsync(productId)).ReturnsAsync(product);

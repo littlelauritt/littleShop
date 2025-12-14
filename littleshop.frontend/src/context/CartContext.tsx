@@ -5,13 +5,12 @@ export interface CartItem extends Product {
     quantity: number;
 }
 
-// 1. Definimos la interfaz correctamente con cartTotal
 interface CartContextType {
     cart: CartItem[];
     addToCart: (product: Product) => void;
     removeFromCart: (productId: number) => void;
     clearCart: () => void;
-    cartTotal: number; // <--- ESTO ARREGLA EL ERROR DE TYPESCRIPT EN CARTPAGE
+    cartTotal: number; 
     cartCount: number;
 }
 
@@ -45,7 +44,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const clearCart = () => setCart([]);
 
-    // 2. Calculamos el total
     const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -56,7 +54,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// 3. ESTA LÍNEA ES LA QUE ARREGLA EL ERROR DE ESLINT (react-refresh)
 // eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
     const context = useContext(CartContext);

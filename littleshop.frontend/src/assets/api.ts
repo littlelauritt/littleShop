@@ -23,7 +23,7 @@ export async function loginUser(data: LoginRequest): Promise<string> {
     });
 
     if (!response.ok) {
-        // CORRECCIÓN: Leemos texto primero para no perder el stream
+
         const text = await response.text();
         let message = 'Credenciales incorrectas.';
         try {
@@ -60,7 +60,7 @@ export async function registerUser(data: RegisterRequest): Promise<void> {
     }
 }
 
-// --- FUNCIÓN DE VERIFICACIÓN (ARREGLADA) ---
+
 export async function verifyUser(userId: string, code: string): Promise<void> {
     
     const url = `${GATEWAY_URL}/api/Account/confirm-email`;
@@ -73,16 +73,16 @@ export async function verifyUser(userId: string, code: string): Promise<void> {
     });
 
     if (!response.ok) {
-        // 1. Leemos el cuerpo como TEXTO primero (esto nunca falla)
+
         const errorText = await response.text();
         let message = 'No se pudo verificar el correo.';
         
         try {
-            // 2. Intentamos parsear a JSON si es posible
+
             const errorJson = JSON.parse(errorText);
             message = errorJson.Message || errorJson.title || message;
         } catch {
-            // 3. Si no es JSON, usamos el texto crudo del servidor (aquí estará el error real)
+
             if (errorText) message = errorText;
         }
 
@@ -111,7 +111,6 @@ export async function authenticatedFetch<T>(
             throw new Error(`Acceso denegado: ${response.status === 403 ? 'No tienes permiso.' : 'Token inválido.'}`);
         }
 
-        // CORRECCIÓN: Lectura segura del error
         const text = await response.text();
         let message = `Error ${response.status}`;
         try {

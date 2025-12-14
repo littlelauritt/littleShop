@@ -2,15 +2,12 @@ import { jwtDecode } from 'jwt-decode';
 
 const TOKEN_KEY = 'littleShopToken';
 
-// 1. Definimos la estructura que esperamos del Token
 interface CustomJwtPayload {
     email?: string;
     role?: string | string[];
-    roles?: string[];
-    // Claves específicas de Microsoft Identity
+    roles?: string[];   
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"?: string;
-    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"?: string | string[];
-    // Permitimos otras propiedades desconocidas
+    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"?: string | string[]; 
     [key: string]: unknown;
 }
 
@@ -30,7 +27,7 @@ export function getUserEmail(): string | null {
     const token = getToken();
     if (!token) return null;
     try {
-        // 2. Usamos el genérico <CustomJwtPayload> en lugar de 'any'
+        
         const decoded = jwtDecode<CustomJwtPayload>(token);
 
         return decoded.email ||
@@ -45,7 +42,7 @@ export function getUserRole(): string | null {
     const token = getToken();
     if (!token) return null;
     try {
-        // 3. Usamos el genérico aquí también
+        
         const decoded = jwtDecode<CustomJwtPayload>(token);
 
         const role =
@@ -54,7 +51,7 @@ export function getUserRole(): string | null {
             decoded['roles'];
 
         if (Array.isArray(role)) return role[0];
-        // Aseguramos que devolvemos string o null
+
         return role as string || null;
     } catch {
         return null;

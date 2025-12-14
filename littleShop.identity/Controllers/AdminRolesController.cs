@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // Necesario para Skip, Take, CountAsync
+using Microsoft.EntityFrameworkCore;
 using Projects.littleShop_identity.Data;
 
 namespace littleShop.identity.Controllers
@@ -22,7 +22,6 @@ namespace littleShop.identity.Controllers
             _userManager = userManager;
         }
 
-        // GET CON PAGINACIÓN
         [HttpGet]
         public async Task<IActionResult> GetAllRoles([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -30,11 +29,7 @@ namespace littleShop.identity.Controllers
             if (pageSize < 1) pageSize = 10;
 
             var query = _roleManager.Roles;
-
-            // 1. Contar total
             var totalCount = await query.CountAsync();
-
-            // 2. Paginar
             var roles = await query
                 .OrderBy(r => r.Name)
                 .Skip((page - 1) * pageSize)
@@ -42,7 +37,6 @@ namespace littleShop.identity.Controllers
                 .Select(r => new { r.Id, r.Name })
                 .ToListAsync();
 
-            // 3. Devolver respuesta paginada
             var response = new PagedResponse<object>(roles, totalCount, page, pageSize);
 
             return Ok(response);
@@ -90,7 +84,6 @@ namespace littleShop.identity.Controllers
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null) return NotFound(new { Message = "Rol no encontrado" });
 
-            // Protección para no borrar el rol Admin por accidente
             if (role.Name == Roles.Admin)
                 return BadRequest(new { Message = "No se puede eliminar el rol de Administrador del sistema" });
 
@@ -117,7 +110,6 @@ namespace littleShop.identity.Controllers
             if (user == null)
                 return NotFound(new { Message = "Usuario no encontrado" });
 
-            // Validamos contra la BD
             if (!await _roleManager.RoleExistsAsync(roleName))
                 return BadRequest(new { Message = "El rol no existe en la base de datos" });
 

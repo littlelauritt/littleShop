@@ -11,7 +11,6 @@ export default function RegisterForm() {
     const [regLoading, setRegLoading] = useState(false);
     const navigate = useNavigate();
 
-    // ✅ RECUPERADO: Reglas de validación
     const passwordValidations = [
         { label: 'Mínimo 8 caracteres', test: (pwd: string) => pwd.length >= 8 },
         { label: 'Al menos una mayúscula', test: (pwd: string) => /[A-Z]/.test(pwd) },
@@ -73,7 +72,7 @@ export default function RegisterForm() {
                                         key={idx}
                                         style={{
                                             fontSize: '0.75rem',
-                                            color: isValid ? '#2ecc71' : '#adb5bd', // Verde si cumple, Gris si no
+                                            color: isValid ? '#2ecc71' : '#adb5bd',
                                             marginBottom: '2px',
                                             transition: 'color 0.3s ease'
                                         }}

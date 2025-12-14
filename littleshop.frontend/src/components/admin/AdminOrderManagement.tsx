@@ -3,7 +3,6 @@ import { Table, Badge, Button, Spinner, Alert, Pagination, Modal, Form } from 'r
 import { shipOrderAdmin, cancelOrderAdmin, OrderResponse } from '../../services/orderService';
 import { authenticatedFetch } from '../../assets/api';
 
-// Extendemos la interfaz para incluir campos de cancelación
 interface SafeOrderResponse extends OrderResponse {
     totalAmount?: number;
     cancellationRequested?: boolean;
@@ -27,11 +26,9 @@ export default function AdminOrderManagement() {
     const [totalPages, setTotalPages] = useState(1);
     const pageSize = 10;
 
-    // Estados para modales
     const [showModal, setShowModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<SafeOrderResponse | null>(null);
 
-    // Filtro
     const [showOnlyCancellationRequests, setShowOnlyCancellationRequests] = useState(false);
 
     const fetchOrders = async (page: number) => {

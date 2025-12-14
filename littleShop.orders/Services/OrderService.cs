@@ -34,14 +34,12 @@ public class OrderService
     {
         try
         {
-            // Validaciones
             if (request.Items == null || !request.Items.Any())
                 return ServiceResult<OrderResponse>.Failure("El pedido debe tener al menos un producto.");
 
             if (string.IsNullOrWhiteSpace(request.ShippingAddress))
                 return ServiceResult<OrderResponse>.Failure("La dirección de envío es obligatoria.");
 
-            // Obtener nombres de productos del catálogo
             var catalogClient = _httpClientFactory.CreateClient("catalog-api");
             var orderItems = new List<OrderItem>();
 
@@ -67,7 +65,6 @@ public class OrderService
                 });
             }
 
-            // Crear la orden
             var order = new Order
             {
                 UserId = userId,
@@ -81,7 +78,6 @@ public class OrderService
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Reducir stock en el catálogo
             foreach (var item in request.Items)
             {
                 var stockRequest = new { Stock = item.Quantity };
@@ -97,7 +93,6 @@ public class OrderService
                 );
             }
 
-            // ✅ Publicar evento usando TU estructura
             await _publishEndpoint.Publish(new OrderCreatedEvent(
                 order.Id,
                 userId,
@@ -106,7 +101,6 @@ public class OrderService
                 order.CreatedAt
             ));
 
-            // Mapear respuesta
             var response = new OrderResponse(
                 order.Id,
                 order.UserId,
@@ -186,7 +180,6 @@ public class OrderService
                 i.Quantity,
                 i.UnitPrice
             )).ToList(),
-            // 👇 ¡AQUÍ FALTABAN ESTAS 3 LÍNEAS! 👇
             o.CancellationRequested,
             o.CancellationRequestedAt,
             o.CancellationReason
@@ -203,7 +196,6 @@ public class OrderService
         return ServiceResult<PagedResponse<OrderResponse>>.Success(response);
     }
 
-    // Usuario normal: SOLICITA cancelación (envía email al admin)
     public async Task<ServiceResult<bool>> RequestCancellationAsync(int orderId, string userId, string reason)
     {
         var order = await _context.Orders
@@ -222,13 +214,11 @@ public class OrderService
         if (order.CancellationRequested)
             return ServiceResult<bool>.Failure("Ya existe una solicitud de cancelación para este pedido.");
 
-        // Marcar solicitud
         order.CancellationRequested = true;
         order.CancellationRequestedAt = DateTime.UtcNow;
         order.CancellationReason = reason;
         await _context.SaveChangesAsync();
 
-        // ✅ Publicar evento para que Identity envíe email al admin
         await _publishEndpoint.Publish(new OrderCancellationRequestedEvent(
             order.Id,
             order.UserId,
@@ -240,7 +230,6 @@ public class OrderService
         return ServiceResult<bool>.Success(true);
     }
 
-    // Admin: CANCELA directamente el pedido
     public async Task<ServiceResult<bool>> CancelOrderAdminAsync(int orderId)
     {
         var order = await _context.Orders
@@ -260,7 +249,6 @@ public class OrderService
         order.CancellationRequested = false;
         await _context.SaveChangesAsync();
 
-        // Publicar evento para restaurar stock
         var itemsToRestore = order.Items.ToDictionary(
             i => i.ProductId,
             i => i.Quantity
@@ -289,18 +277,16 @@ public class OrderService
         order.Status = OrderStatus.Shipped;
         await _context.SaveChangesAsync();
 
-        // ✅ CORREGIDO: Añadimos un número de seguimiento ficticio
         var trackingNumber = "TRK-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
 
         await _publishEndpoint.Publish(new OrderShippedEvent(
             order.Id,
             order.CustomerEmail,
-            trackingNumber // <--- ¡AQUÍ ESTABA EL FALTANTE!
+            trackingNumber 
         ));
 
         return true;
     }
 }
 
-// DTO auxiliar para deserializar producto del catálogo
 internal record ProductDto(int Id, string Name, decimal Price);

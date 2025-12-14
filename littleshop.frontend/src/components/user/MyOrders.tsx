@@ -2,7 +2,6 @@
 import { Table, Badge, Button, Spinner, Alert, Modal, Form } from 'react-bootstrap';
 import { getMyOrders, requestCancellation, OrderResponse } from '../../services/orderService';
 
-// Extendemos la interfaz para evitar errores de tipo si el backend devuelve campos extra
 interface SafeOrderResponse extends OrderResponse {
     totalAmount?: number;
     cancellationRequested?: boolean;
@@ -14,9 +13,8 @@ export default function MyOrders() {
     const [orders, setOrders] = useState<SafeOrderResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [successMsg, setSuccessMsg] = useState(''); // Estado para mensajes de éxito
+    const [successMsg, setSuccessMsg] = useState(''); 
 
-    // --- ESTADOS PARA MODALES ---
     const [showModal, setShowModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<SafeOrderResponse | null>(null);
 
@@ -25,11 +23,9 @@ export default function MyOrders() {
     const [cancellationReason, setCancellationReason] = useState('');
     const [cancelLoading, setCancelLoading] = useState(false);
 
-    // Cargar pedidos
     const fetchOrders = async () => {
         try {
             const data = await getMyOrders();
-            // Ordenar por ID descendente (más reciente primero)
             setOrders(data.sort((a, b) => b.id - a.id));
         } catch (err) {
             console.error(err);
@@ -41,14 +37,12 @@ export default function MyOrders() {
 
     useEffect(() => { fetchOrders(); }, []);
 
-    // Abrir modal de cancelación
     const handleOpenCancelModal = (id: number) => {
         setOrderToCancel(id);
         setCancellationReason('');
         setShowCancelModal(true);
     };
 
-    // Confirmar cancelación
     const handleConfirmCancellation = async () => {
         if (!cancellationReason || !orderToCancel) return;
 
@@ -57,7 +51,7 @@ export default function MyOrders() {
             await requestCancellation(orderToCancel, cancellationReason);
             setSuccessMsg('Solicitud enviada correctamente.');
             setShowCancelModal(false);
-            fetchOrders(); // Recargar la lista para ver el nuevo estado
+            fetchOrders(); 
         } catch (err) {
             const errorMsg = (err as Error).message.toLowerCase();
             if (errorMsg.includes('ya existe')) {
@@ -70,13 +64,11 @@ export default function MyOrders() {
         }
     };
 
-    // Ver detalles
     const handleShowDetails = (order: SafeOrderResponse) => {
         setSelectedOrder(order);
         setShowModal(true);
     };
 
-    // Helper para total
     const getSafeTotal = (order: SafeOrderResponse) => {
         return (order.total !== undefined ? order.total : order.totalAmount) || 0;
     };

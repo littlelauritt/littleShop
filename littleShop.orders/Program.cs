@@ -20,25 +20,20 @@ builder.AddNpgsqlDbContext<OrdersDbContext>("ordersdb");
 // 2. Servicios
 builder.Services.AddScoped<OrderService>();
 
-// 3. Cliente HTTP (HÍBRIDO: Detector de Entorno Infalible)
+// 3. Cliente HTTP 
 builder.Services.AddHttpClient("catalog-api", client =>
 {
-    // Esta variable la pone .NET automáticamente cuando está dentro de un Docker real.
-    // En tu ordenador (Aspire), esto será falso o nulo.
     var esDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
 
     if (esDocker)
     {
-        // --- ESTAMOS EN GITHUB ACTIONS / DOCKER COMPOSE ---
-        // Usamos la dirección fija interna de la red Docker.
+
         client.BaseAddress = new Uri("http://catalog-api:8080");
         Console.WriteLine("🐳 Orders detectó MODO DOCKER -> Conectando a catalog-api:8080");
     }
     else
     {
-        // --- ESTAMOS EN ASPIRE (TU ORDENADOR) ---
-        // Usamos el nombre del recurso definido en AppHost: "littleshop-catalog".
-        // La magia de 'https+http' deja que Aspire elija el puerto dinámico.
+
         client.BaseAddress = new Uri("https+http://littleshop-catalog");
         Console.WriteLine("💜 Orders detectó MODO ASPIRE -> Conectando a littleshop-catalog (Service Discovery)");
     }
@@ -67,7 +62,7 @@ var secretKey = jwtOptions["Key"];
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.RequireHttpsMetadata = false; // Importante para Docker interno
+        options.RequireHttpsMetadata = false; 
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -89,7 +84,7 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// 7. MIGRACIONES Y DOCS (Corregido para Docker)
+// 7. MIGRACIONES Y DOCS
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -114,9 +109,7 @@ app.MapScalarApiReference(options =>
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ==================================================================
 // ENDPOINTS
-// ==================================================================
 
 var api = app.MapGroup("/api/v1/orders").WithTags("Orders").RequireAuthorization();
 
@@ -144,7 +137,6 @@ api.MapPost("/", async (CreateOrderRequest request, OrderService service, Claims
     return Results.Created($"/api/v1/orders/{result.Data!.Id}", result.Data);
 });
 
-// ✅ NUEVO: Usuario solicita cancelación
 api.MapPost("/{id:int}/request-cancellation", async (
     int id,
     RequestCancellationDto dto,
@@ -160,7 +152,6 @@ api.MapPost("/{id:int}/request-cancellation", async (
         : Results.BadRequest(new { errors = result.Errors });
 });
 
-// Admin endpoints
 var adminApi = api.MapGroup("/admin").RequireAuthorization();
 
 adminApi.MapGet("/", async (int? page, int? pageSize, OrderService service, ClaimsPrincipal user) =>
@@ -170,7 +161,6 @@ adminApi.MapGet("/", async (int? page, int? pageSize, OrderService service, Clai
     return Results.Ok(result.Data);
 });
 
-// ✅ NUEVO: Admin cancela pedido
 adminApi.MapPost("/{id:int}/cancel", async (int id, OrderService service, ClaimsPrincipal user) =>
 {
     if (!user.IsInRole("Admin")) return Results.Forbid();

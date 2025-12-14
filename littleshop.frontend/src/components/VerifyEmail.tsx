@@ -1,16 +1,11 @@
 ﻿import { useState, useEffect, useCallback } from "react";
-// Importamos el hook para leer la URL
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { verifyUser } from "../assets/api";
 
 export default function VerifyEmail() {
     const [status, setStatus] = useState('verifying'); 
-    
-    // Hook para leer los parámetros ?userId=...&code=...
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-
-    // Extraemos los datos de la URL
     const userId = searchParams.get("userId");
     const code = searchParams.get("code");
 
@@ -20,7 +15,7 @@ export default function VerifyEmail() {
             await verifyUser(uid, c);
             
             setStatus('success');
-            // Opcional: Redirigir al login después de 3 segundos
+
             setTimeout(() => navigate('/login'), 3000);
 
         } catch (error) {
@@ -30,7 +25,6 @@ export default function VerifyEmail() {
     }, [navigate]); 
 
     useEffect(() => {
-        // Solo intentamos verificar si tenemos los datos
         if (userId && code) {
             verifyAccount(userId, code);
         } else {

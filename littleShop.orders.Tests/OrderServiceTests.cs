@@ -82,11 +82,8 @@ namespace littleShop.orders.Tests
             // Assert
             Assert.That(result.Succeeded, Is.True);
 
-            // ✅ HE QUITADO LA LÍNEA DE TotalAmount QUE DABA ERROR PARA NO TOCAR TUS DTOs
-            // Solo comprobamos que el estado sea el correcto
             Assert.That(result.Data!.Status, Is.EqualTo("Pending"));
 
-            // Verificar que se guardó en BD correctamente
             _mockOrdersSet.Verify(m => m.Add(It.Is<Order>(o =>
                 o.UserId == userId &&
                 o.TotalAmount == 100m &&

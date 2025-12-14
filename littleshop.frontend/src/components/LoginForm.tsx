@@ -1,12 +1,12 @@
 ﻿import { useState } from "react";
 import type { FormEvent } from "react";
 import { loginUser } from "../assets/api";
-import { saveToken, logout, getUserRole } from "../assets/utils/auth"; // ✅ Importamos getUserRole
+import { saveToken, logout, getUserRole } from "../assets/utils/auth"; 
 import { useNavigate } from "react-router-dom";
 import { Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 
 interface LoginFormProps {
-    onLogin?: () => void; // Hacemos la prop opcional, ya que navegaremos nosotros
+    onLogin?: () => void;
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
@@ -21,28 +21,26 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         setLoginMessage('');
         setLoginLoading(true);
 
-        logout(); // Limpiar sesión anterior
+        logout(); 
 
         try {
             const token = await loginUser({ email: loginEmail, password: loginPassword });
-            saveToken(token); // Guardamos token
+            saveToken(token); 
 
             setLoginMessage('¡Login exitoso! Redirigiendo...');
 
-            // ✅ LÓGICA DE REDIRECCIÓN INTELIGENTE
-            const role = getUserRole(); // Leemos el rol del token recién guardado
+            const role = getUserRole(); 
 
             setTimeout(() => {
                 setLoginLoading(false);
                 if (role === 'Admin') {
-                    navigate('/admin'); // Admin -> Panel
+                    navigate('/admin'); 
                 } else {
-                    navigate('/profile'); // Usuario normal -> Perfil
+                    navigate('/profile'); 
                 }
 
-                // Si existe la prop onLogin (por compatibilidad), la ejecutamos también
                 if (onLogin) onLogin();
-            }, 500); // Pequeña pausa para que se vea el mensaje de éxito
+            }, 500); 
 
         } catch (error) {
             setLoginLoading(false);

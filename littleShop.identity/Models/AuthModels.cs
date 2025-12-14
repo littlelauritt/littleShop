@@ -22,7 +22,7 @@ namespace littleShop.identity.Models
         [JsonPropertyName("refreshToken")]
         public required string RefreshToken { get; set; }
 
-        [JsonPropertyName("expiration")] // ← Esto hace que se serialice como "expiration"
+        [JsonPropertyName("expiration")] 
         public required DateTime ExpiresAt { get; set; }
     }
 

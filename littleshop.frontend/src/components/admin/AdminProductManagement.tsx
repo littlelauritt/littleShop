@@ -23,13 +23,12 @@ export default function AdminProductManagement() {
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
 
-    // ✅ Formulario actualizado con imageUrl
     const [formData, setFormData] = useState<ProductDto>({
         name: '',
         description: '',
         price: 0,
         stock: 0,
-        imageUrl: '' // Nuevo campo
+        imageUrl: '' 
     });
 
     useEffect(() => { fetchProducts(currentPage); }, [currentPage]);
@@ -72,7 +71,7 @@ export default function AdminProductManagement() {
                 description: product.description || '',
                 price: product.price,
                 stock: product.stock,
-                imageUrl: product.imageUrl || '' // Cargar imagen existente
+                imageUrl: product.imageUrl || '' 
             });
         } else {
             setEditingId(null);

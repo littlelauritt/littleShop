@@ -20,7 +20,6 @@ public class OrderCancellationRequestedConsumer(
             evt.CustomerEmail
         );
 
-        // Obtener email del admin desde configuración
         var adminEmail = configuration["AdminEmail"] ?? "admin@littleshop.com";
 
         var subject = $"🚫 Solicitud de Cancelación - Pedido #{evt.OrderId}";

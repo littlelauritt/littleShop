@@ -70,7 +70,6 @@ public static class Extensions
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
-        // Rutas de salud usadas por Aspire Dashboard
         if (app.Environment.IsDevelopment())
         {
             

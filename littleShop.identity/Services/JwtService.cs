@@ -30,16 +30,10 @@ namespace littleShop.identity.Services
 
             var claims = new[]
 {
-                // 1. CAMBIO: Usar ClaimTypes.NameIdentifier en lugar de JwtRegisteredClaimNames.Sub
-                // Esto asegura que User.FindFirstValue(ClaimTypes.NameIdentifier) funcione siempre.
                 new Claim(ClaimTypes.NameIdentifier, userId),
     
-                // 2. Usar ClaimTypes.Email (Opcional, pero recomendado para consistencia)
                 new Claim(ClaimTypes.Email, email),
 
-                // 3. CAMBIO CRÍTICO: Usar ClaimTypes.Role
-                // Esto genera el claim largo: "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-                // Al hacer esto, [Authorize(Roles="Admin")] funcionará automáticamente.
                 new Claim(ClaimTypes.Role, role),
 
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -55,7 +49,6 @@ namespace littleShop.identity.Services
                 signingCredentials: creds
             );
 
-            // Crear refresh token persistente
             var refreshToken = new RefreshToken
             {
                 Id = Guid.NewGuid(),

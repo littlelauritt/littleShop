@@ -2,7 +2,6 @@
 
 namespace littleShop.catalog.DTOs;
 
-// ✅ Añadido ImageUrl al final
 public record ProductResponse(int Id, string Name, string? Description, decimal Price, int Stock, string? ImageUrl);
 
 public record CreateProductRequest(
@@ -10,7 +9,7 @@ public record CreateProductRequest(
     string? Description,
     [Range(0.01, 10000)] decimal Price,
     [Range(0, 9999)] int Stock,
-    string? ImageUrl // ✅ Nuevo (Opcional)
+    string? ImageUrl 
 );
 
 public record UpdateStockRequest(int Stock);

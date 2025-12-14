@@ -21,7 +21,6 @@ public class ProductService(CatalogDbContext db)
             .OrderBy(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            // ✅ AÑADIDO: p.ImageUrl al constructor del DTO
             .Select(p => new ProductResponse(p.Id, p.Name, p.Description, p.Price, p.Stock, p.ImageUrl))
             .ToListAsync();
 
@@ -40,13 +39,12 @@ public class ProductService(CatalogDbContext db)
             Description = request.Description,
             Price = request.Price,
             Stock = request.Stock,
-            ImageUrl = request.ImageUrl // ✅ GUARDAMOS LA URL
+            ImageUrl = request.ImageUrl 
         };
 
         db.Products.Add(product);
         await db.SaveChangesAsync();
 
-        // ✅ DEVOLVEMOS LA URL
         var response = new ProductResponse(product.Id, product.Name, product.Description, product.Price, product.Stock, product.ImageUrl);
         return ServiceResult<ProductResponse>.Success(response);
     }
@@ -71,7 +69,7 @@ public class ProductService(CatalogDbContext db)
         product.Description = request.Description;
         product.Price = request.Price;
         product.Stock = request.Stock;
-        product.ImageUrl = request.ImageUrl; // ✅ ACTUALIZAMOS LA URL
+        product.ImageUrl = request.ImageUrl; 
 
         await db.SaveChangesAsync();
 
@@ -94,7 +92,6 @@ public class ProductService(CatalogDbContext db)
         var product = await db.Products.FindAsync(id);
         if (product == null) return ServiceResult<ProductResponse>.Failure($"Producto {id} no encontrado.");
 
-        // ✅ AÑADIDO ImageUrl
         var response = new ProductResponse(
             product.Id,
             product.Name,

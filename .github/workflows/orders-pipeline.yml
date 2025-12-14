@@ -31,7 +31,7 @@ jobs:
       run: dotnet restore littleShop.orders/littleShop.orders.csproj
     - name: Build
       run: dotnet build littleShop.orders/littleShop.orders.csproj --no-restore -c Release
-    # Ejecutamos tests unitarios
+    
     - name: Run Unit Tests
       run: dotnet test littleShop.orders.Tests/littleShop.orders.Tests.csproj --verbosity normal
 
@@ -66,19 +66,13 @@ jobs:
       run: |
         export ORDERS_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
         
-        # 1. Levantar servicios
         docker compose up -d --build
         
         echo "⏳ Esperando 40 segundos a que los servicios arranquen..."
         sleep 40
 
-        # ==============================================================================
-        # 🌱 SOLUCIÓN: CREAR EL PRODUCTO MANUALMENTE PARA QUE EL TEST LO ENCUENTRE
-        # ==============================================================================
         echo "🌱 Intentando crear Producto Semilla en el Catálogo..."
         
-        # Intentamos crear el producto (incluye ImageUrl y Description nuevos)
-        # Usamos || true para que si falla (ej. si ya existe) no pare el pipeline, pero intentamos crearlo.
         curl -v -X POST http://localhost:5002/api/v1/products \
              -H "Content-Type: application/json" \
              -d '{
@@ -131,7 +125,6 @@ jobs:
         
         echo "Token obtenido: ${TOKEN:0:10}..."
         
-        # 4. Prueba rápida de creación de pedido manual (Debug)
         echo "🧪 Prueba manual de crear pedido..."
         curl -v -X POST http://localhost:5003/api/v1/orders \
               -H "Content-Type: application/json" \

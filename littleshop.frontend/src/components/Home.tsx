@@ -15,34 +15,24 @@ const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 
 export default function Home() {
     const [products, setProducts] = useState<Product[]>([]);
-
-    // Estados de paginación
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const pageSize = 8;
-
-    // Estados de carga
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
     const { addToCart } = useCart();
 
-    useEffect(() => {
-        fetchProducts(currentPage);
-    }, [currentPage]);
+    useEffect(() => { fetchProducts(currentPage); }, [currentPage]);
 
     const fetchProducts = async (page: number) => {
         setLoading(true);
         setError('');
         try {
             const response = await fetch(`${GATEWAY_URL}/api/v1/products?page=${page}&pageSize=${pageSize}`);
-
             if (!response.ok) throw new Error('Error al cargar productos');
-
             const data: PagedResponse = await response.json();
             setProducts(data.items);
             setTotalPages(data.totalPages);
-
         } catch (err) {
             setError('No se pudieron cargar los productos. Por favor, intenta más tarde.');
             console.error(err);
@@ -51,13 +41,8 @@ export default function Home() {
         }
     };
 
-    const handlePrev = () => {
-        if (currentPage > 1) setCurrentPage(p => p - 1);
-    };
-
-    const handleNext = () => {
-        if (currentPage < totalPages) setCurrentPage(p => p + 1);
-    };
+    const handlePrev = () => { if (currentPage > 1) setCurrentPage(p => p - 1); };
+    const handleNext = () => { if (currentPage < totalPages) setCurrentPage(p => p + 1); };
 
     if (loading) return (
         <div className="d-flex flex-column justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
@@ -74,7 +59,6 @@ export default function Home() {
 
     return (
         <Container>
-            {/* Paginación discreta alineada a la derecha */}
             <div className="d-flex justify-content-end align-items-center mb-4 mt-3">
                 <span className="text-muted small me-3">
                     Página {currentPage} de {totalPages}
@@ -89,15 +73,29 @@ export default function Home() {
                 <Row>
                     {products.map((product) => (
                         <Col key={product.id} md={6} lg={4} xl={3} className="mb-4">
-                            <Card className="h-100 shadow-sm border-0">
-                                {/* Contenedor de imagen con altura fija */}
-                                <div style={{ height: '220px', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
+                            {/* ✅ CAMBIO: overflow-hidden y border-0 para que la imagen respete los bordes redondos */}
+                            <Card className="h-100 shadow-sm border-0 overflow-hidden">
+
+                                {/* Contenedor de imagen limpio */}
+                                <div style={{
+                                    height: '220px',
+                                    padding: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: '#fff', // Fondo blanco para que la imagen (si es PNG transparente) se vea bien
+                                    position: 'relative'
+                                }}>
                                     {product.imageUrl ? (
                                         <Card.Img
                                             variant="top"
                                             src={product.imageUrl}
                                             alt={product.name}
-                                            style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                            style={{
+                                                maxHeight: '100%',
+                                                maxWidth: '100%',
+                                                objectFit: 'contain'
+                                            }}
                                         />
                                     ) : (
                                         <div className="text-center text-muted">
@@ -112,7 +110,6 @@ export default function Home() {
                                         {product.name}
                                     </Card.Title>
 
-                                    {/* Descripción completa con salto de línea */}
                                     <Card.Text className="text-muted small flex-grow-1" style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>
                                         {product.description}
                                     </Card.Text>
@@ -141,25 +138,12 @@ export default function Home() {
                 </Row>
             )}
 
-            {/* Controles de Paginación */}
             {totalPages > 1 && (
                 <div className="d-flex justify-content-center gap-2 my-5">
-                    <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={handlePrev}
-                        disabled={currentPage === 1}
-                        className="px-3"
-                    >
+                    <Button variant="outline-secondary" size="sm" onClick={handlePrev} disabled={currentPage === 1} className="px-3">
                         Anterior
                     </Button>
-                    <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={handleNext}
-                        disabled={currentPage === totalPages}
-                        className="px-3"
-                    >
+                    <Button variant="outline-secondary" size="sm" onClick={handleNext} disabled={currentPage === totalPages} className="px-3">
                         Siguiente
                     </Button>
                 </div>

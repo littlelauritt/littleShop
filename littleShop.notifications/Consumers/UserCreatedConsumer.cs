@@ -12,8 +12,6 @@ public class UserCreatedConsumer(IEmailService emailService, ILogger<UserCreated
         var msg = context.Message;
         logger.LogInformation("👤 Usuario registrado: {Email}. Enviando confirmación...", msg.Email);
 
-        // Construimos el enlace al FRONTEND
-        // La ruta será /verify-email?userid=...&code=...
         var frontendUrl = "http://localhost:5173";
         var verificationLink = $"{frontendUrl}/verify-email?userId={msg.UserId}&code={msg.ConfirmationToken}";
 
@@ -31,7 +29,6 @@ public class UserCreatedConsumer(IEmailService emailService, ILogger<UserCreated
             <p style='font-size: 0.8em; color: #666;'>{verificationLink}</p>
         ";
 
-        // Usamos el método genérico SendEmailAsync
         await emailService.SendEmailAsync(msg.Email, subject, body);
     }
 }

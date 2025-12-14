@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { Form, Button, Alert, Card, Spinner } from 'react-bootstrap';
-import { authenticatedFetch } from '../../assets/api'; // Corregido: Importamos de api.ts
+import { authenticatedFetch } from '../../assets/api';
 
 export default function ChangePassword() {
     const [currentPassword, setCurrentPassword] = useState('');

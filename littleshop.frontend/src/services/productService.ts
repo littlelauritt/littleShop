@@ -1,6 +1,5 @@
 ﻿import { authenticatedFetch } from "../assets/api";
 
-// ✅ Actualizado con imageUrl
 export interface Product {
     id: number;
     name: string;
@@ -10,7 +9,6 @@ export interface Product {
     imageUrl?: string;
 }
 
-// ✅ Actualizado con imageUrl
 export interface ProductDto {
     name: string;
     description: string;
@@ -19,7 +17,6 @@ export interface ProductDto {
     imageUrl?: string;
 }
 
-// --- LECTURA (Público) ---
 
 export async function getProducts(): Promise<Product[]> {
     return await authenticatedFetch<Product[]>('/api/v1/products', 'GET');
@@ -29,7 +26,6 @@ export async function getProductById(id: number): Promise<Product> {
     return await authenticatedFetch<Product>(`/api/v1/products/${id}`, 'GET');
 }
 
-// --- ESCRITURA (Admin) ---
 
 export async function createProduct(product: ProductDto): Promise<Product> {
     return await authenticatedFetch<Product>('/api/v1/products', 'POST', product);

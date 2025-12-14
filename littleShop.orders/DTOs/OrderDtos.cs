@@ -2,20 +2,17 @@
 
 namespace littleShop.orders.DTOs;
 
-// ✅ Request para crear pedido (SIN ProductName)
 public record CreateOrderRequest(
     List<OrderItemDto> Items,
     string ShippingAddress
 );
 
-// ✅ DTO para items en la request (sin ProductName)
 public record OrderItemDto(
     int ProductId,
     int Quantity,
     decimal UnitPrice
 );
 
-// ✅ Response de pedido
 public record OrderResponse(
     int Id,
     string UserId,
@@ -25,12 +22,11 @@ public record OrderResponse(
     string Status,
     string ShippingAddress,
     List<OrderItemResponseDto> Items,
-    bool CancellationRequested = false,           // ✅ NUEVO
-    DateTime? CancellationRequestedAt = null,     // ✅ NUEVO
-    string? CancellationReason = null             // ✅ NUEVO
+    bool CancellationRequested = false,           
+    DateTime? CancellationRequestedAt = null,     
+    string? CancellationReason = null             
 );
 
-// ✅ DTO para items en la response (CON ProductName)
 public record OrderItemResponseDto(
     int ProductId,
     string ProductName,
@@ -38,7 +34,6 @@ public record OrderItemResponseDto(
     decimal UnitPrice
 );
 
-// ✅ Respuesta paginada
 public record PagedResponse<T>(
     IEnumerable<T> Items,
     int TotalCount,

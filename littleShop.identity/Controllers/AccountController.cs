@@ -53,17 +53,14 @@ namespace littleShop.identity.Controllers
 
             await _userManager.AddToRoleAsync(user, Roles.User);
 
-            // Generar token de confirmación
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            // ⬇️ NUEVO: AUTO-CONFIRMAR SOLO EN DESARROLLO (para que pasen los tests)
             var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
             if (isDevelopment)
             {
                 await _userManager.ConfirmEmailAsync(user, token);
             }
 
-            // Codificar token y publicar evento (el email se envía igual)
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
             await _publishEndpoint.Publish(new UserCreatedEvent(
                 user.Id,
@@ -108,13 +105,11 @@ namespace littleShop.identity.Controllers
             string decodedToken;
             try
             {
-                // 1. Intento estándar (Base64Url)
                 var decodedBytes = WebEncoders.Base64UrlDecode(request.Code);
                 decodedToken = Encoding.UTF8.GetString(decodedBytes);
             }
             catch
             {
-                // 2. Intento de recuperación (si el token llegó dañado)
                 try
                 {
                     var dirtyCode = request.Code.Replace(" ", "+");
@@ -134,7 +129,6 @@ namespace littleShop.identity.Controllers
                 return Ok(new { Message = "Email confirmado correctamente." });
             }
 
-            // Devolver error específico de Identity si falla
             var errorMsg = result.Errors.FirstOrDefault()?.Description ?? "Token inválido o expirado.";
             return BadRequest(errorMsg);
         }

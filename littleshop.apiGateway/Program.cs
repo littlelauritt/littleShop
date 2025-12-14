@@ -13,9 +13,6 @@ builder.AddServiceDefaults();
 // 1. REDIS
 builder.AddRedisClient("redis");
 
-// --- NUEVO: 1.1 CONFIGURAR CORS ---
-// Esto permite que CUALQUIER origen (tu frontend) se conecte.
-// En producción se restringe, pero para desarrollo esto soluciona el problema.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -25,7 +22,6 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
-// ----------------------------------
 
 // 2. RATE LIMITING
 builder.Services.AddRateLimiter(rateLimiterOptions =>
@@ -34,7 +30,7 @@ builder.Services.AddRateLimiter(rateLimiterOptions =>
     rateLimiterOptions.AddPolicy("anonymous", context =>
     {
         var redis = context.RequestServices.GetRequiredService<IConnectionMultiplexer>();
-        // Usamos una clave fija para desarrollo si IP falla, para evitar nulls
+        
         var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "development-ip";
 
         return RedisRateLimitPartition.GetFixedWindowRateLimiter(
@@ -70,7 +66,7 @@ builder.Services.AddReverseProxy()
 
 // 4. JWT
 var jwtOptions = builder.Configuration.GetSection("Jwt");
-// Agregamos un chequeo de seguridad por si la clave no carga
+
 var secretKey = jwtOptions["Key"] ?? throw new InvalidOperationException("JWT Key not found!");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -100,10 +96,8 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// --- NUEVO: USAR LA POLÍTICA DE CORS ---
-// ¡Importante! Debe ir ANTES de Auth y de ReverseProxy
 app.UseCors("AllowAll");
-// ---------------------------------------
+
 
 app.UseRateLimiter();
 app.UseAuthentication();

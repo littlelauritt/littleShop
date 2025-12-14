@@ -21,7 +21,6 @@ export default function CartPage() {
         setMsg(null);
 
         try {
-            // Mapeamos el carrito al DTO que espera el backend
             const itemsToSend: OrderItemDto[] = cart.map(item => ({
                 productId: item.id,
                 productName: item.name,
@@ -33,8 +32,6 @@ export default function CartPage() {
 
             clearCart();
             setMsg({ text: 'Pedido realizado con éxito. Redirigiendo...', type: 'success' });
-
-            // Redirigir al perfil para ver el pedido
             setTimeout(() => navigate('/profile'), 2000);
 
         } catch (error) {

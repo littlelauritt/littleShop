@@ -23,5 +23,5 @@ export interface Product {
     description: string;
     price: number;
     stock: number;
-    imageUrl?: string; // Campo opcional para la imagen
+    imageUrl?: string;
 }
