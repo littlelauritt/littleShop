@@ -31,7 +31,7 @@ jobs:
       run: dotnet restore littleShop.orders/littleShop.orders.csproj
     - name: Build
       run: dotnet build littleShop.orders/littleShop.orders.csproj --no-restore -c Release
-    # HE AÑADIDO ESTO PARA QUE VERIFIQUE TUS TESTS ARREGLADOS
+    # Ejecutamos tests unitarios
     - name: Run Unit Tests
       run: dotnet test littleShop.orders.Tests/littleShop.orders.Tests.csproj --verbosity normal
 
@@ -61,51 +61,87 @@ jobs:
         file: ./littleShop.orders/Dockerfile
         push: true
         tags: ${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
+    
     - name: Run Integration Tests (Docker Compose)
       run: |
         export ORDERS_IMAGE=${{ env.REGISTRY }}/${{ env.LOWERCASE_REPO }}/orders-api:latest
-
-        docker compose up -d --build orders-api orders-db identity-api identity-db catalog-api catalog-db
-
-        echo "⏳ Esperando a que los servicios estén listos..."
-        sleep 60
         
-        # ✅ Esperar a que catalog tenga productos
+        # 1. Levantar servicios
+        docker compose up -d --build
+        
+        echo "⏳ Esperando 40 segundos a que los servicios arranquen..."
+        sleep 40
+
+        # ==============================================================================
+        # 🌱 SOLUCIÓN: CREAR EL PRODUCTO MANUALMENTE PARA QUE EL TEST LO ENCUENTRE
+        # ==============================================================================
+        echo "🌱 Intentando crear Producto Semilla en el Catálogo..."
+        
+        # Intentamos crear el producto (incluye ImageUrl y Description nuevos)
+        # Usamos || true para que si falla (ej. si ya existe) no pare el pipeline, pero intentamos crearlo.
+        curl -v -X POST http://localhost:5002/api/v1/products \
+             -H "Content-Type: application/json" \
+             -d '{
+                   "name": "Producto Test 1",
+                   "description": "Descripción de prueba creada por CI/CD",
+                   "price": 10.0,
+                   "stock": 100,
+                   "imageUrl": "http://placehold.it/image.png"
+                 }' || echo "⚠️ Aviso: No se pudo crear el producto (o la API aún no responde)"
+
+        echo "⏳ Esperando 5 segundos para asegurar persistencia..."
+        sleep 5
+        # ==============================================================================
+
+        # 2. Ahora sí, verificamos que exista (el bucle original)
         echo "🔍 Verificando que catalog tenga productos..."
         max_attempts=30
         attempt=0
         while [ $attempt -lt $max_attempts ]; do
+          # Buscamos el producto que acabamos de crear
           if curl -s http://localhost:5002/api/v1/products | grep -q "Producto Test 1"; then
-            echo "✅ Catalog tiene productos!"
+            echo "✅ Catalog tiene el producto listo!"
             break
           fi
-          echo "⏳ Intento $((attempt+1))/$max_attempts - Esperando a que catalog tenga productos..."
+          echo "⏳ Intento $((attempt+1))/$max_attempts - Esperando a que catalog responda..."
           sleep 2
           attempt=$((attempt+1))
         done
         
         if [ $attempt -eq $max_attempts ]; then
-          echo "❌ Timeout esperando productos en catalog"
+          echo "❌ Timeout: El producto no apareció en el catálogo."
+          echo "📜 Logs de catalog-api:"
           docker logs catalog-api
           exit 1
         fi
+
         echo "==== 🔍 ESTADO DE LOS CONTENEDORES ===="
         docker ps -a
         
+        # 3. Registrar usuario Admin para obtener Token
+        echo "👤 Registrando usuario admin..."
         curl -X POST http://localhost:5001/api/Account/register \
               -H "Content-Type: application/json" \
               -d '{"email":"admin@test.com", "password":"Pass123$!"}'
-        echo "==== 🧪 PRUEBA MANUAL DEL ENDPOINT ===="
+        
+        echo "🔑 Obteniendo Token..."
         TOKEN=$(curl -s -X POST http://localhost:5001/api/Account/login \
               -H "Content-Type: application/json" \
               -d '{"email":"admin@test.com", "password":"Pass123$!"}' | jq -r '.token')
-        echo "Token obtenido: ${TOKEN:0:20}..."
+        
+        echo "Token obtenido: ${TOKEN:0:10}..."
+        
+        # 4. Prueba rápida de creación de pedido manual (Debug)
+        echo "🧪 Prueba manual de crear pedido..."
         curl -v -X POST http://localhost:5003/api/v1/orders \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer $TOKEN" \
               -d '{"items": [{"productId": 1, "quantity": 2, "unitPrice": 10.0}], "shippingAddress": "Calle Falsa 123"}'
+        
         echo "==== FIN DEBUG ===="
+        
+        # 5. Ejecutar tests completos con Newman
         npm install -g newman
         newman run ./tests/orders-api-test.json --env-var baseUrl=http://localhost:5003
+        
         docker compose down
-
