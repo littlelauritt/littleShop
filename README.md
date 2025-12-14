@@ -211,9 +211,9 @@ littleShop/
 ├── 📁 .config/                          # Configuración de herramientas
 ├── 📁 .github/
 │   └── workflows/                       # ⚙️ GitHub Actions CI/CD Pipelines
-│       ├── build-test.yml               # Build y testing automatizado
-│       ├── docker-build.yml             # Construcción de imágenes Docker
-│       └── deploy.yml                   # Deployment automation
+│       ├── catalog-pipeline.yml         # Pipeline del servicio Catalog
+│       ├── identity-pipeline.yml        # Pipeline del servicio Identity
+│       └── orders-pipeline.yml          # Pipeline del servicio Orders
 ├── 📁 littleShop/                       # 🎯 AppHost (Aspire Orchestrator)
 ├── 📁 littleShop.Shared/                # DTOs y código compartido
 ├── 📁 littleShop.identity/              # 🔐 Authentication Service
@@ -256,68 +256,43 @@ littleShop/
 
 ## 🔄 CI/CD y GitHub Actions
 
-El proyecto incluye pipelines automatizados de CI/CD configurados en `.github/workflows/` para garantizar la calidad del código y facilitar el despliegue.
+El proyecto incluye pipelines automatizados de CI/CD configurados en `.github/workflows/` para cada microservicio.
 
 ### Workflows Disponibles
 
-#### 🧪 Build and Test
-- **Trigger**: Push y Pull Requests a `main`
-- **Acciones**:
-  - Compila todos los proyectos .NET
-  - Ejecuta suite completa de tests unitarios
-  - Genera reportes de cobertura de código
-  - Valida formato y estilo de código
+Cada microservicio tiene su propio pipeline de CI/CD:
 
-#### 🚀 Docker Build
-- **Trigger**: Push a `main` y tags
-- **Acciones**:
-  - Construye imágenes Docker para cada microservicio
-  - Ejecuta análisis de seguridad en imágenes
-  - Publica a container registry (si está configurado)
-  - Tagea imágenes con versión y `latest`
+#### 📦 Catalog Pipeline
+**Archivo**: `catalog-pipeline.yml`
+- Pipeline automatizado para el servicio de catálogo
+- Build, test y deployment del servicio de productos
 
-#### 📦 Deploy
-- **Trigger**: Release tags (`v*.*.*`)
-- **Acciones**:
-  - Despliega servicios a entorno de staging/producción
-  - Ejecuta smoke tests post-deployment
-  - Rollback automático en caso de fallo
+#### 🔐 Identity Pipeline
+**Archivo**: `identity-pipeline.yml`
+- Pipeline automatizado para el servicio de identidad
+- Build, test y deployment del servicio de autenticación
+
+#### 🛒 Orders Pipeline
+**Archivo**: `orders-pipeline.yml`
+- Pipeline automatizado para el servicio de pedidos
+- Build, test y deployment del servicio de órdenes
 
 ### Badges de Estado
 
-Puedes añadir estos badges al README para mostrar el estado de los workflows:
+Añade estos badges al principio del README para mostrar el estado de los workflows:
 
 ```markdown
-[![Build and Test](https://github.com/littlelauritt/littleShop/actions/workflows/build-test.yml/badge.svg)](https://github.com/littlelauritt/littleShop/actions/workflows/build-test.yml)
-[![Docker Build](https://github.com/littlelauritt/littleShop/actions/workflows/docker-build.yml/badge.svg)](https://github.com/littlelauritt/littleShop/actions/workflows/docker-build.yml)
+[![Catalog Pipeline](https://github.com/littlelauritt/littleShop/actions/workflows/catalog-pipeline.yml/badge.svg)](https://github.com/littlelauritt/littleShop/actions/workflows/catalog-pipeline.yml)
+[![Identity Pipeline](https://github.com/littlelauritt/littleShop/actions/workflows/identity-pipeline.yml/badge.svg)](https://github.com/littlelauritt/littleShop/actions/workflows/identity-pipeline.yml)
+[![Orders Pipeline](https://github.com/littlelauritt/littleShop/actions/workflows/orders-pipeline.yml/badge.svg)](https://github.com/littlelauritt/littleShop/actions/workflows/orders-pipeline.yml)
 ```
 
-### Ejecutar Workflows Localmente
+### Ver Estado de los Workflows
 
-Para probar los workflows localmente antes de hacer push:
-
-```bash
-# Instalar act (https://github.com/nektos/act)
-# macOS
-brew install act
-
-# Ejecutar workflow específico
-act -j build-and-test
-
-# Ejecutar todos los workflows
-act
+Puedes ver el estado y logs de los workflows en:
 ```
-
-### Secretos y Variables de Entorno
-
-Los workflows utilizan los siguientes secretos (configurados en GitHub Settings):
-
-| Secreto | Descripción |
-|---------|-------------|
-| `DOCKER_USERNAME` | Usuario para Docker Hub/Registry |
-| `DOCKER_PASSWORD` | Token de acceso a Docker Registry |
-| `DEPLOY_SSH_KEY` | Clave SSH para deployment |
-| `SONAR_TOKEN` | Token para SonarCloud (análisis de código) |
+https://github.com/littlelauritt/littleShop/actions
+```
 
 ---
 
@@ -473,6 +448,14 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 - GitHub: [@littlelauritt](https://github.com/littlelauritt)
 - Proyecto: [littleShop](https://github.com/littlelauritt/littleShop)
+
+---
+
+## 🙏 Agradecimientos
+
+- Equipo de .NET por .NET Aspire
+- Comunidad de React y TypeScript
+- Todos los contribuidores de las librerías open source utilizadas
 
 ---
 
