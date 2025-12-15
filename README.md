@@ -33,7 +33,7 @@
 - ✅ **Comunicación Asíncrona**: Mensajería basada en eventos usando **RabbitMQ** y **MassTransit**
 - ✅ **API Gateway**: **YARP** como punto de entrada único y balanceo de carga
 - ✅ **Documentación API**: Integración con **Scalar** para una experiencia superior a Swagger
-- ✅ **Pruebas de Rendimiento**: Scripts de carga incluidos con **k6**
+- ✅ **Testing Completo**: Tests unitarios, de integración (.NET), flujos end-to-end (Postman) y pruebas de carga (k6)
 - ✅ **Infraestructura Local**: Contenedores auto-gestionados para Postgres, Redis y MailDev
 - ✅ **Observabilidad**: Telemetría completa con **OpenTelemetry**
 
@@ -68,12 +68,13 @@
 | **Bootstrap 5** | Framework CSS |
 | **React Router DOM** | Enrutamiento SPA |
 
-### Herramientas de Desarrollo
+### Herramientas de Desarrollo y Testing
 
 - **MailDev** - Servidor SMTP de prueba (Dashboard en puerto 1080)
 - **pgAdmin** - Interfaz gráfica para PostgreSQL
 - **Redis Insight** - Gestión visual de Redis
 - **k6** - Pruebas de carga y rendimiento
+- **Postman** - Colección de tests de integración end-to-end
 
 ---
 
@@ -244,7 +245,10 @@ littleShop/
 ├── 📁 tests/                            # Test projects
 │   ├── littleShop.catalog.Tests/
 │   ├── littleShop.identity.Tests/
-│   └── littleShop.orders.Tests/
+│   ├── littleShop.orders.Tests/
+│   └── postman/                         # 🔬 Postman Integration Tests
+│       ├── LittleShop Integration Flow.postman_collection.json
+│       └── LittleShop Local.postman_environment.json
 ├── 📄 load-test.js                      # k6 load testing script
 ├── 📄 docker-compose.yml                # Configuración Docker (opcional)
 ├── 📄 Directory.Packages.props          # Gestión centralizada de NuGet
@@ -296,16 +300,131 @@ https://github.com/littlelauritt/littleShop/actions
 
 ---
 
+
+## 🧪 Tests de Integración con Postman
+
+El proyecto incluye una colección completa de Postman para realizar tests de integración end-to-end que verifican el flujo completo de la aplicación.
+
+### 📦 Archivos Incluidos
+
+Los archivos de Postman están ubicados en `tests/postman/`:
+
+- **`LittleShop Integration Flow.postman_collection.json`**: Colección con el flujo completo de integración
+- **`LittleShop Local.postman_environment.json`**: Variables de entorno para ejecutar localmente
+
+### 🔄 Flujo de Tests
+
+La colección ejecuta el siguiente flujo end-to-end:
+
+1. **Login** (`POST /api/Account/login`)
+   - Autentica un usuario administrador
+   - Extrae y guarda el token JWT automáticamente
+   - Verifica respuesta exitosa (200 OK)
+
+2. **Crear Producto** (`POST /api/v1/products`)
+   - Crea un producto nuevo en el catálogo
+   - Utiliza el token JWT del login
+   - Guarda el ID del producto creado
+   - Verifica respuesta (200/201)
+
+3. **Crear Pedido** (`POST /api/v1/orders`)
+   - Crea un pedido con el producto anterior
+   - Utiliza el token JWT para autenticación
+   - Verifica que el pedido se crea correctamente (200/201)
+
+### 🚀 Cómo Usar
+
+#### Paso 1: Importar en Postman
+
+1. Abre Postman
+2. Click en **Import**
+3. Selecciona los dos archivos JSON de la carpeta `tests/postman/`
+4. Se importarán automáticamente la colección y el environment
+
+#### Paso 2: Configurar el Environment
+
+1. En Postman, selecciona el environment **"LittleShop Local"**
+2. Edita las variables y configura las URLs de tus servicios (obtén los puertos del Dashboard de Aspire):
+   ```json
+   url_identity: http://localhost:XXXX
+   url_catalog: http://localhost:YYYY
+   url_orders: http://localhost:ZZZZ
+   ```
+3. Guarda los cambios
+
+#### Paso 3: Ejecutar los Tests
+
+**Opción A - Manualmente (uno por uno):**
+1. Selecciona la colección "LittleShop Integration Flow"
+2. Ejecuta cada request en orden: Login → Crear Producto → Crear Pedido
+3. Los scripts automáticos guardarán el token y el product ID
+
+**Opción B - Toda la colección (automatizado):**
+1. Click derecho en la colección
+2. Selecciona "Run collection"
+3. Click en "Run LittleShop Integration Flow"
+4. Observa los resultados de todos los tests
+
+### ✅ Verificaciones Automáticas
+
+La colección incluye tests automáticos que verifican:
+
+- ✅ Códigos de estado HTTP correctos (200, 201)
+- ✅ Presencia del token JWT en la respuesta de login
+- ✅ Guardado automático del token para requests subsecuentes
+- ✅ Creación exitosa de productos
+- ✅ Creación exitosa de pedidos con productos válidos
+
+### 📊 Resultados Esperados
+
+Cuando ejecutas la colección completa, deberías ver:
+
+```
+✓ Login exitoso y Token recibido
+✓ Producto creado exitosamente  
+✓ Pedido creado con éxito
+```
+
+**Total: 3/3 tests passed** ✅
+
+### 🔧 Troubleshooting
+
+**Error: ECONNREFUSED**
+- Asegúrate de que la aplicación está corriendo (Dashboard de Aspire debe estar activo)
+- Verifica las URLs en el environment (puertos correctos)
+
+**Error 401 Unauthorized**
+- El token no se guardó correctamente
+- Ejecuta primero el request de Login manualmente
+
+**Error 404 Not Found**
+- Verifica que las rutas sean correctas: `/api/v1/products`, `/api/v1/orders`
+- Comprueba que los microservicios estén corriendo en el Dashboard
+
+---
 ## 💻 Desarrollo
 
-### Ejecutar tests
+```
 
+#### Tests .NET (Unitarios e Integración)
 ```bash
 # Ejecutar todos los tests
 dotnet test
 
 # Ejecutar tests de un proyecto específico
 dotnet test littleShop.catalog.Tests/
+```
+
+#### Tests de Integración End-to-End (Postman)
+Ver la sección [Tests de Integración con Postman](#-tests-de-integración-con-postman) para instrucciones detalladas.
+
+```bash
+# Alternativa: Usando Newman (CLI de Postman)
+npm install -g newman
+
+# Ejecutar la colección desde la línea de comandos
+newman run "tests/postman/LittleShop Integration Flow.postman_collection.json" \
+  -e "tests/postman/LittleShop Local.postman_environment.json"
 ```
 
 ### Trabajar con el Frontend

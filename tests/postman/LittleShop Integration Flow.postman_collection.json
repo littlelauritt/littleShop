@@ -1,0 +1,159 @@
+{
+	"info": {
+		"_postman_id": "394b3647-9723-4633-9bd9-e7b819bd00c9",
+		"name": "LittleShop Integration Flow",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "16452603"
+	},
+	"item": [
+		{
+			"name": "1. Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"// Verificamos si existe el campo 'token' en la respuesta\r",
+							"if(jsonData.token){\r",
+							"    // Guardamos el token en la variable de entorno para usarlo después\r",
+							"    pm.environment.set(\"token\", jsonData.token);\r",
+							"    console.log(\"¡Token guardado correctamente!\");\r",
+							"} else {\r",
+							"    console.error(\"No se encontró el campo 'token' en la respuesta\");\r",
+							"}\r",
+							"\r",
+							"pm.test(\"Login exitoso y Token recibido\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"    pm.expect(jsonData.token).to.not.be.undefined;\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"admin@admin.com\", \r\n  \"password\": \"Admin123456.\" \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{url_identity}}/api/Account/login"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Crear Producto",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"if(jsonData.id){\r",
+							"    pm.environment.set(\"new_product_id\", jsonData.id);\r",
+							"}\r",
+							"\r",
+							"pm.test(\"Producto creado exitosamente\", function () {\r",
+							"    // Aceptamos 200 (OK) o 201 (Created)\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Producto Test {{$randomInt}}\", \r\n  \"description\": \"Creado automáticamente\",\r\n  \"price\": 150.50,\r\n  \"stock\": 50,\r\n  \"imageUrl\": \"test.jpg\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{url_catalog}}/api/v1/products"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Crear Pedido",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Pedido creado con éxito\", function () {\r",
+							"    // Aceptamos 200 (OK) o 201 (Created)\r",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]); \r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"shippingAddress\": \"Calle Falsa 123, Zaragoza\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": {{new_product_id}},\r\n      \"quantity\": 1,\r\n      \"unitPrice\": 99.99\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{url_orders}}/api/v1/orders"
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": {
+			"token": "{{token}}"
+		}
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
